@@ -28,20 +28,52 @@ const Tinker: Task = {
 
 const GetWorthless: Task = {
   name: "Get Worthless Trinkets",
-  done: async () => {
-    return true;
+  done: async (client, items) => {
+    return (
+      ((await client.inventory.get()).get(items.TRINKET) ?? 0) +
+        ((await client.inventory.get()).get(items.KNICKNACK) ?? 0) +
+        ((await client.inventory.get()).get(items.GEWGAW) ?? 0) >=
+      3
+    );
   },
-  execute: async () => {
+  execute: async (client, items) => {
+    await client.fetchText("shop.php", {
+      method: "GET",
+      query: {
+        whichshop: "generalstore",
+        action: "buyitem",
+        quantity: 1,
+        whichrow: 648,
+      },
+    });
+    await client.fetchText("inv_use.php", {
+      method: "GET",
+      query: {
+        which: 3,
+        whichitem: 23,
+      },
+    });
     return true;
   },
 };
 
 const GetClovers: Task = {
   name: "Get 11-leaf Clovers",
-  done: async () => {
-    return true;
+  done: async (client) => {
+    const hermitText = await client.fetchText("hermit.php", {
+      method: "GET",
+    });
+    return hermitText.includes("out of stock for today");
   },
-  execute: async () => {
+  execute: async (client) => {
+    await client.fetchText("hermit.php", {
+      method: "POST",
+      query: {
+        action: "trade",
+        whichitem: "10881",
+        quantity: "1",
+      },
+    });
     return true;
   },
 };

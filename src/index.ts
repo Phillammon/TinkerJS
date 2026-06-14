@@ -41,7 +41,7 @@ const runTinker = async () => {
 
     if (!attemptedTask) {
       console.log("No task attempted. Waiting 30 seconds.");
-      return new Promise((resolve) => {
+      await new Promise((resolve) => {
         setTimeout(resolve, 30000);
       });
     }
