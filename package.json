@@ -1,0 +1,31 @@
+{
+  "name": "tinkerjs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node --import tsx ./src/index.ts",
+    "dev": "DEBUG=true tsx watch ./src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Phillammon/TinkerJS.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Phillammon/TinkerJS/issues"
+  },
+  "homepage": "https://github.com/Phillammon/TinkerJS#readme",
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "kol.js": "^0.10.3",
+    "ts-dotenv": "^0.9.1"
+  }
+}
