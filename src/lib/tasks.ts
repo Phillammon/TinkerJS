@@ -80,10 +80,22 @@ const GetClovers: Task = {
 
 const StockClovers: Task = {
   name: "Stock clovers in mall",
-  done: async () => {
-    return true;
+  done: async (client, items) => {
+    return !(await client.inventory.get()).get(items.CLOVER);
   },
-  execute: async () => {
+  execute: async (client) => {
+    await client.fetchText("backoffice.php", {
+      method: "GET",
+      query: {
+        itemid: "10881",
+        quantity: "*",
+        price: "30000",
+        limit: "",
+        action: "additem",
+        neveragain: 0,
+        priceok: 0,
+      },
+    });
     return true;
   },
 };
