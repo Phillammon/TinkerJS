@@ -18,10 +18,13 @@ type Task = {
 
 const Tinker: Task = {
   name: "Tinker",
-  done: async () => {
+  done: async (client) => {
     return true;
+    return !(await client.kmail.fetch()).length;
   },
-  execute: async () => {
+  execute: async (client) => {
+    const firstMail = (await client.kmail.fetch())[0];
+
     return true;
   },
 };

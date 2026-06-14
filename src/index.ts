@@ -18,13 +18,28 @@ const runTinker = async () => {
       await kolClient.waitForRolloverEnd();
       await kolClient.login();
     }
-    console.log("Refreshing data.");
-    await kolClient.checkLoggedIn();
-    await kolClient.inventory.get.refresh();
+    try {
+      console.log("Refreshing data.");
+      await kolClient.checkLoggedIn();
+      await kolClient.inventory.get.refresh();
+    } catch (e) {
+      console.log(`Data refresh failed: ${e}`);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 30000);
+      });
+      continue;
+    }
 
     let attemptedTask = false;
     for (let task of TinkerTasks) {
-      if (!(await task.done(kolClient, items, state))) {
+      let taskIsDone = true;
+      try {
+        taskIsDone = await task.done(kolClient, items, state);
+      } catch (e) {
+        console.log(`Status check for task ${task.name} failed: ${e}`);
+        break;
+      }
+      if (!taskIsDone) {
         console.log(`Executing task: ${task.name}`);
         attemptedTask = true;
         try {
