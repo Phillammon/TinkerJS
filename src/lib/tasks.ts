@@ -58,20 +58,37 @@ const StockClovers: Task = {
 
 const EatEggs: Task = {
   name: "Buy and eat pickled eggs",
-  done: async () => {
-    return true;
+  done: async (client) => {
+    return client.fullness > 14;
   },
-  execute: async () => {
-    return true;
+  execute: async (client, items) => {
+    await client.fetchText("shop.php", {
+      method: "GET",
+      query: {
+        whichshop: "generalstore",
+        action: "buyitem",
+        quantity: 1,
+        whichrow: 646,
+      },
+    });
+    return (await client.consumption.eat(items.PICKLEDEGG)).success;
   },
 };
 
 const DrinkIPA: Task = {
   name: "Drink IPA at Gnomish Microbrewery",
-  done: async () => {
-    return true;
+  done: async (client) => {
+    return client.inebriety > 13;
   },
-  execute: async () => {
+  execute: async (client) => {
+    await client.fetchText("cafe.php", {
+      method: "POST",
+      query: {
+        cafeid: "2",
+        action: "CONSUME!",
+        whichitem: "-3",
+      },
+    });
     return true;
   },
 };
@@ -96,10 +113,18 @@ const FarmChalk: Task = {
 
 const Nightcap: Task = {
   name: "Drink Nightcap",
-  done: async () => {
-    return true;
+  done: async (client) => {
+    return client.inebriety > 14;
   },
-  execute: async () => {
+  execute: async (client) => {
+    await client.fetchText("cafe.php", {
+      method: "POST",
+      query: {
+        cafeid: "2",
+        action: "CONSUME!",
+        whichitem: "-3",
+      },
+    });
     return true;
   },
 };
