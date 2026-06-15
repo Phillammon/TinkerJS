@@ -36,7 +36,6 @@ const Tinker: Task = {
     }
     if (receivedItems.length !== 2) {
       console.log("I don't know what to do with that many items");
-      return false;
     }
 
     const quantity = Math.min(...receivedItems.map((item) => item[1]));
@@ -48,7 +47,7 @@ const Tinker: Task = {
         query: {
           mode: method,
           action: "craft",
-          quantity: quantity,
+          qty: quantity,
           a: (receivedItems[0] as [Item, number])[0].id,
           b: (receivedItems[1] as [Item, number])[0].id,
         },
@@ -62,10 +61,10 @@ const Tinker: Task = {
       );
       if (createdItem) {
         console.log(`Created ${quantity}x ${createdItem.name}`);
-        console.log(`Sending back to ${firstMail?.who?.name}`);
+        console.log(`Sending created item(s) to ${firstMail?.who?.name}`);
         await client.kmail.send(
           firstMail?.who.id as number,
-          `Tinkering yielded: ${quantity}x ${createdItem.name}\n\nThis used ${quantity} of your daily free crafts.\n\nThank you for tinkering!`,
+          `Tinkering yielded: ${quantity} ${quantity === 1 ? createdItem.name : (createdItem.plural ?? createdItem.name)}\n\nThis used ${quantity} of your daily free crafts.\n\nThank you for tinkering!`,
           {
             items: new Map([[createdItem, quantity]]),
           },
@@ -76,7 +75,7 @@ const Tinker: Task = {
     }
 
     console.log(`Tinkering failed`);
-    console.log(`Sending items to ${firstMail?.who?.name}`);
+    console.log(`Returning items to ${firstMail?.who?.name}`);
     await client.kmail.send(
       firstMail?.who.id as number,
       `I'm sorry, I couldn't figure out what to do with those items.\n\nThis has not consumed any of your daily free crafts.\n\nThank you for tinkering!`,
@@ -84,6 +83,8 @@ const Tinker: Task = {
         items: new Map(receivedItems),
       },
     );
+
+    await client.kmail.delete([firstMail?.id || 0]);
     return false;
   },
 };
