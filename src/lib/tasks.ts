@@ -36,44 +36,43 @@ const Tinker: Task = {
     }
     if (receivedItems.length !== 2) {
       console.log("I don't know what to do with that many items");
-    }
+    } else {
+      const quantity = Math.min(...receivedItems.map((item) => item[1]));
+      let creationResult = null;
 
-    const quantity = Math.min(...receivedItems.map((item) => item[1]));
-    let creationResult = null;
-
-    for (let method of methods) {
-      const result = await client.fetchText("craft.php", {
-        method: "POST",
-        query: {
-          mode: method,
-          action: "craft",
-          qty: quantity,
-          a: (receivedItems[0] as [Item, number])[0].id,
-          b: (receivedItems[1] as [Item, number])[0].id,
-        },
-      });
-      creationResult = result.match(/descitem\([0-9]+\)/);
-      if (creationResult) break;
-    }
-    if (creationResult) {
-      const createdItem = await gameData.findItemByDescId(
-        parseInt(creationResult[0].replace(/\D/g, "")),
-      );
-      if (createdItem) {
-        console.log(`Created ${quantity}x ${createdItem.name}`);
-        console.log(`Sending created item(s) to ${firstMail?.who?.name}`);
-        await client.kmail.send(
-          firstMail?.who.id as number,
-          `Tinkering yielded: ${quantity} ${quantity === 1 ? createdItem.name : (createdItem.plural ?? createdItem.name)}\n\nThis used ${quantity} of your daily free crafts.\n\nThank you for tinkering!`,
-          {
-            items: new Map([[createdItem, quantity]]),
+      for (let method of methods) {
+        const result = await client.fetchText("craft.php", {
+          method: "POST",
+          query: {
+            mode: method,
+            action: "craft",
+            qty: quantity,
+            a: (receivedItems[0] as [Item, number])[0].id,
+            b: (receivedItems[1] as [Item, number])[0].id,
           },
+        });
+        creationResult = result.match(/descitem\([0-9]+\)/);
+        if (creationResult) break;
+      }
+      if (creationResult) {
+        const createdItem = await gameData.findItemByDescId(
+          parseInt(creationResult[0].replace(/\D/g, "")),
         );
-        await client.kmail.delete([firstMail?.id || 0]);
-        return true;
+        if (createdItem) {
+          console.log(`Created ${quantity}x ${createdItem.name}`);
+          console.log(`Sending created item(s) to ${firstMail?.who?.name}`);
+          await client.kmail.send(
+            firstMail?.who.id as number,
+            `Tinkering yielded: ${quantity} ${quantity === 1 ? createdItem.name : (createdItem.plural ?? createdItem.name)}\n\nThis used ${quantity} of your daily free crafts.\n\nThank you for tinkering!`,
+            {
+              items: new Map([[createdItem, quantity]]),
+            },
+          );
+          await client.kmail.delete([firstMail?.id || 0]);
+          return true;
+        }
       }
     }
-
     console.log(`Tinkering failed`);
     console.log(`Returning items to ${firstMail?.who?.name}`);
     await client.kmail.send(
