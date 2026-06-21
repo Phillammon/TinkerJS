@@ -1,17 +1,15 @@
 import { config } from "./config.js";
-import { RelevantItemsLoaded, Task } from "./types.js";
+import { Task } from "./types.js";
 import { Tinker } from "./tinkertask.js";
 import { relevantItems } from "./items.js";
-
-const items = relevantItems as RelevantItemsLoaded;
 
 const GetWorthless: Task = {
   name: "Get Worthless Trinkets",
   done: async (client) => {
     return (
-      ((await client.inventory.get()).get(items.TRINKET) ?? 0) +
-        ((await client.inventory.get()).get(items.KNICKNACK) ?? 0) +
-        ((await client.inventory.get()).get(items.GEWGAW) ?? 0) >=
+      ((await client.inventory.get()).get(relevantItems.TRINKET) ?? 0) +
+        ((await client.inventory.get()).get(relevantItems.KNICKNACK) ?? 0) +
+        ((await client.inventory.get()).get(relevantItems.GEWGAW) ?? 0) >=
       3
     );
   },
@@ -60,7 +58,7 @@ const GetClovers: Task = {
 const StockClovers: Task = {
   name: "Stock clovers in mall",
   done: async (client) => {
-    return !(await client.inventory.get()).get(items.CLOVER);
+    return !(await client.inventory.get()).get(relevantItems.CLOVER);
   },
   execute: async (client) => {
     await client.fetchText("backoffice.php", {
@@ -94,7 +92,7 @@ const EatEggs: Task = {
         whichrow: 646,
       },
     });
-    return (await client.consumption.eat(items.PICKLEDEGG)).success;
+    return (await client.consumption.eat(relevantItems.PICKLEDEGG)).success;
   },
 };
 
@@ -119,7 +117,7 @@ const DrinkIPA: Task = {
 const AlertSeventeen: Task = {
   name: "Alert 17-Ball",
   done: async (client) => {
-    return !(await client.inventory.get()).get(items.SEVENTEENBALL);
+    return !(await client.inventory.get()).get(relevantItems.SEVENTEENBALL);
   },
   execute: async (client) => {
     console.log("FOUND AND CLOSETED 17-BALL");
@@ -129,7 +127,7 @@ const AlertSeventeen: Task = {
         "Seventeen-Ball Found\nSeventeen-Ball Found\nSeventeen-Ball Found\nSeventeen-Ball Found\nSeventeen-Ball Found\nSeventeen-Ball Found",
       );
     }
-    client.closet.deposit(items.SEVENTEENBALL, 1);
+    client.closet.deposit(relevantItems.SEVENTEENBALL, 1);
     return true;
   },
 };
@@ -169,6 +167,7 @@ const Nightcap: Task = {
     state.rollover();
     await client.fetchText("inv_use.php", {
       query: {
+        method: "GET",
         which: "3",
         whichitem: "10917",
       },

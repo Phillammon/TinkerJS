@@ -1,7 +1,10 @@
 import { Item } from "data-of-loathing";
-import { gameData } from "kol.js";
+import { Client, gameData, success } from "kol.js";
 
 import { Task } from "./types.js";
+import { KmailMessage } from "kol.js/domains/KmailMailbox";
+import { relevantItems } from "./items.js";
+import { TinkerState } from "./state.js";
 
 const methods = ["cook", "smith", "cocktail"];
 
@@ -10,67 +13,228 @@ export const Tinker: Task = {
   done: async (client) => {
     return !(await client.kmail.fetch()).length;
   },
-  execute: async (client) => {
+  execute: async (client, state) => {
     const firstMail = (await client.kmail.fetch())[0];
     console.log(`Processing Kmail from ${firstMail?.who.name}`);
-    const receivedItems = Array.from(firstMail?.items.entries() || []);
-    if (receivedItems.length) {
-      console.log(`Detected items:`);
-      for (let item of receivedItems) {
-        console.log(`- ${item[1]}x ${item[0].name}`);
-      }
-    }
-    if (receivedItems.length !== 2) {
-      console.log("I don't know what to do with that many items");
-    } else {
-      const quantity = Math.min(...receivedItems.map((item) => item[1]));
-      let creationResult = null;
+    const { chalk, otherItems } = extractItemsFromKmail(
+      firstMail as KmailMessage,
+    );
+    const chalkResult = await processChalk(
+      firstMail?.who.id as number,
+      chalk,
+      client,
+      state,
+    );
 
-      for (let method of methods) {
-        const result = await client.fetchText("craft.php", {
-          method: "POST",
-          query: {
-            mode: method,
-            action: "craft",
-            qty: quantity,
-            a: (receivedItems[0] as [Item, number])[0].id,
-            b: (receivedItems[1] as [Item, number])[0].id,
-          },
-        });
-        creationResult = result.match(/descitem\([0-9]+\)/);
-        if (creationResult) break;
-      }
-      if (creationResult) {
-        const createdItem = await gameData.findItemByDescId(
-          parseInt(creationResult[0].replace(/\D/g, "")),
-        );
-        if (createdItem) {
-          console.log(`Created ${quantity}x ${createdItem.name}`);
-          console.log(`Sending created item(s) to ${firstMail?.who?.name}`);
-          await client.kmail.send(
-            firstMail?.who.id as number,
-            `Tinkering yielded: ${quantity} ${quantity === 1 ? createdItem.name : (createdItem.plural ?? createdItem.name)}\n\nThis used ${quantity} of your daily free crafts.\n\nThank you for tinkering!`,
-            {
-              items: new Map([[createdItem, quantity]]),
-            },
-          );
-          await client.kmail.delete([firstMail?.id || 0]);
-          return true;
-        }
-      }
-    }
-    console.log(`Tinkering failed`);
-    console.log(`Returning items to ${firstMail?.who?.name}`);
+    const craftResult = await attemptCrafting(
+      firstMail?.who.id as number,
+      otherItems,
+      client,
+      state,
+    );
+
+    const chalkMessage = chalkResult.chalkUsed
+      ? `Detected ${chalkResult.chalkUsed} handful${chalkResult.chalkUsed > 1 ? "s" : ""} of hand chalk. ${chalkResult.craftsAdded} crafts were added to your banked crafts pool.`
+      : null;
+    const craftMessage = `${craftResult.result}\n\n${craftResult.craftsSuccessful ? `This cost ${craftResult.dailyCraftsSpent} of your daily crafts${craftResult.craftsSuccessful > craftResult.dailyCraftsSpent ? ` and ${craftResult.craftsSuccessful > craftResult.dailyCraftsSpent} of your banked crafts` : ""}.` : "This did not cost any of your daily or banked crafts."}`;
+    const remainingMessage = `You currently have ${craftResult.remainingDaily} daily craft${craftResult.remainingDaily > 1 ? "s" : ""} and ${craftResult.remainingBanked} banked craft${craftResult.remainingBanked > 1 ? "s" : ""} available.`;
+
+    await client.kmail.delete([firstMail?.id || 0]);
     await client.kmail.send(
       firstMail?.who.id as number,
-      `I'm sorry, I couldn't figure out what to do with those items.\n\nThis has not consumed any of your daily free crafts.\n\nThank you for tinkering!`,
+      `${chalkMessage ? `${chalkMessage}\n\n` : ""}${craftMessage}\n\n${remainingMessage}\n\nThank you for tinkering. Have a nice day!`,
       {
-        items: new Map(receivedItems),
+        items: new Map(craftResult.yieldedItems),
       },
     );
 
-    await client.kmail.delete([firstMail?.id || 0]);
-    return false;
+    return true;
   },
 };
 
+const extractItemsFromKmail: (kmail: KmailMessage) => {
+  chalk: number;
+  otherItems: [Item, number][];
+} = (kmail: KmailMessage) => {
+  const chalkCount = kmail.items.get(relevantItems.CHALK);
+  const items = Array.from(kmail.items.entries() || []).filter(
+    ([item]) => item !== relevantItems.CHALK,
+  );
+  return { chalk: chalkCount ?? 0, otherItems: items };
+};
+
+const processChalk: (
+  id: number,
+  chalk: number,
+  client: Client,
+  state: TinkerState,
+) => Promise<{
+  chalkUsed: number;
+  craftsAdded: number;
+  bankedCrafts: number;
+}> = async (id, chalk, client, state) => {
+  await client.fetchText("multiuse.php", {
+    query: {
+      method: "GET",
+      action: "useitem",
+      whichitem: relevantItems.CHALK.id,
+      quantity: chalk,
+    },
+  });
+  const newCrafts = (state.bankedMap.get(id) ?? 0) + 10 * chalk;
+  state.bankedMap.set(id, newCrafts);
+  state.save();
+  return {
+    chalkUsed: chalk,
+    craftsAdded: chalk * 10,
+    bankedCrafts: newCrafts,
+  };
+};
+
+const attemptCrafting: (
+  id: number,
+  items: [Item, number][],
+  client: Client,
+  state: TinkerState,
+) => Promise<{
+  result: string;
+  craftsAttempted: number;
+  craftsSuccessful: number;
+  yieldedItems: [Item, number][];
+  remainingDaily: number;
+  remainingBanked: number;
+  dailyCraftsSpent: number;
+}> = async (id, items, client, state) => {
+  if (items.length) {
+    console.log(`Detected items:`);
+    for (let item of items) {
+      console.log(`- ${item[1]}x ${item[0].name}`);
+    }
+  }
+  if (items.length > 2 || items.length === 0) {
+    return {
+      result:
+        "I don't know what to do with that many crafting components, sorry.",
+      craftsAttempted: 0,
+      craftsSuccessful: 0,
+      yieldedItems: items,
+      remainingBanked: state.bankedMap.get(id) ?? 0,
+      remainingDaily: state.todayMap.get(id) ?? 100,
+      dailyCraftsSpent: 0,
+    };
+  } else {
+    let components = items.map(([item]) => item);
+    let componentQuantity = Math.min(...items.map(([_item, count]) => count));
+    let availableCrafts =
+      (state.todayMap.get(id) ?? 100) + (state.bankedMap.get(id) ?? 0);
+    if (components.length === 1) {
+      components = [components[0] as Item, components[0] as Item];
+      componentQuantity = Math.floor(componentQuantity / 2);
+    }
+    if (availableCrafts === 0) {
+      return {
+        result: `I detected crafting components, but you've used all your daily free crafts, and don't have any banked crafts left. You are granted ten banked crafts for every handful of hand chalk you send me- you would need to send ${Math.ceil(componentQuantity / 10)} handful${componentQuantity > 10 ? "s" : ""} of hand chalk to complete this crafting operation, or wait until tomorrow.`,
+        craftsAttempted: 0,
+        craftsSuccessful: 0,
+        yieldedItems: items,
+        remainingBanked: state.bankedMap.get(id) ?? 0,
+        remainingDaily: state.todayMap.get(id) ?? 100,
+        dailyCraftsSpent: 0,
+      };
+    }
+    const craftsToAttempt = Math.min(componentQuantity, availableCrafts);
+    let creationResult = null;
+
+    for (let method of methods) {
+      const result = await client.fetchText("craft.php", {
+        method: "POST",
+        query: {
+          mode: method,
+          action: "craft",
+          qty: craftsToAttempt,
+          a: (components[0] as Item).id,
+          b: (components[1] as Item).id,
+        },
+      });
+      creationResult = result.match(/descitem\([0-9]+\)/);
+      if (creationResult) break;
+    }
+    if (creationResult) {
+      const createdItem = await gameData.findItemByDescId(
+        parseInt(creationResult[0].replace(/\D/g, "")),
+      );
+      if (createdItem) {
+        const attemptedCrafts = componentQuantity;
+        const successfulCrafts = craftsToAttempt;
+        const dailyCraftsSpent = Math.min(
+          state.todayMap.get(id) ?? 100,
+          successfulCrafts,
+        );
+        const bankedCraftsSpent = successfulCrafts - dailyCraftsSpent;
+        state.todayMap.set(
+          id,
+          (state.todayMap.get(id) ?? 100) - dailyCraftsSpent,
+        );
+        state.bankedMap.set(
+          id,
+          (state.bankedMap.get(id) ?? 0) - bankedCraftsSpent,
+        );
+        state.save();
+        const itemsToReturn = items
+          .map(([item, count]) => [
+            item,
+            count -
+              (items.length === 1 ? successfulCrafts * 2 : successfulCrafts),
+          ])
+          .filter(([_item, count]) => (count as number) > 0);
+        let message = "";
+        if (createdItem.tradeable) {
+          itemsToReturn.push([createdItem, successfulCrafts]);
+          if (successfulCrafts === attemptedCrafts) {
+            message = `Successfully crafted ${successfulCrafts}x ${successfulCrafts > 1 ? (createdItem.plural ?? createdItem.name) : createdItem.name}`;
+          } else {
+            const neededChalk = Math.ceil(
+              (attemptedCrafts - successfulCrafts) / 10,
+            );
+            message = `I tried to craft ${attemptedCrafts}x ${attemptedCrafts > 1 ? (createdItem.plural ?? createdItem.name) : createdItem.name}, but you only have ${successfulCrafts} craft${successfulCrafts > 1 ? "s" : ""} left for today. To craft the rest, either send ${neededChalk} handful${neededChalk > 1 ? "s" : ""} of hand chalk along with the rest of the components, or wait for tomorrow.`;
+          }
+        } else {
+          message = `I successfully crafted ${successfulCrafts}x ${createdItem.name}, but those aren't tradeable, so I can't send them back. Sorry.`;
+        }
+        return {
+          result: message,
+          craftsAttempted: attemptedCrafts,
+          craftsSuccessful: successfulCrafts,
+          yieldedItems: itemsToReturn,
+          remainingBanked: state.bankedMap.get(id) ?? 0,
+          remainingDaily: state.todayMap.get(id) ?? 100,
+          dailyCraftsSpent: dailyCraftsSpent,
+        };
+      }
+    } else {
+      return {
+        result:
+          items.length === 1
+            ? `I tried crafting your ${components[0]?.name} with itself, but it didn't craft into anything.`
+            : `I tried crafting your ${components[0]?.name} and ${components[1]?.name} together, but they didn't craft into anything.`,
+        craftsAttempted: 0,
+        craftsSuccessful: 0,
+        yieldedItems: items,
+        remainingBanked: state.bankedMap.get(id) ?? 0,
+        remainingDaily: state.todayMap.get(id) ?? 100,
+        dailyCraftsSpent: 0,
+      };
+    }
+  }
+
+  return {
+    result:
+      "Tinker made no attempt to determine what you were trying to craft because this is a test",
+    craftsAttempted: 0,
+    craftsSuccessful: 0,
+    yieldedItems: items,
+    remainingBanked: state.bankedMap.get(id) ?? 0,
+    remainingDaily: state.todayMap.get(id) ?? 100,
+    dailyCraftsSpent: 0,
+  };
+};
