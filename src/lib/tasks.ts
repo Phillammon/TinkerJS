@@ -116,6 +116,24 @@ const DrinkIPA: Task = {
   },
 };
 
+const AlertSeventeen: Task = {
+  name: "Alert 17-Ball",
+  done: async (client) => {
+    return !(await client.inventory.get()).get(items.SEVENTEENBALL);
+  },
+  execute: async (client) => {
+    console.log("FOUND AND CLOSETED 17-BALL");
+    if (config.OPERATOR_ID) {
+      client.kmail.send(
+        config.OPERATOR_ID,
+        "Seventeen-Ball Found\nSeventeen-Ball Found\nSeventeen-Ball Found\nSeventeen-Ball Found\nSeventeen-Ball Found\nSeventeen-Ball Found",
+      );
+    }
+    client.closet.deposit(items.SEVENTEENBALL, 1);
+    return true;
+  },
+};
+
 const FarmChalk: Task = {
   name: "Farm Chalk in Billiards Room",
   done: async (client) => {
@@ -149,16 +167,6 @@ const Nightcap: Task = {
       },
     });
     state.rollover();
-    if (
-      config.OPERATOR_ID &&
-      (await client.inventory.get()).get(items.SEVENTEENBALL)
-    ) {
-      client.kmail.send(
-        config.OPERATOR_ID,
-        "Seventeen-Ball Found\nSeventeen-Ball Found\nSeventeen-Ball Found\nSeventeen-Ball Found\nSeventeen-Ball Found\nSeventeen-Ball Found",
-      );
-      client.closet.deposit(items.SEVENTEENBALL, 1);
-    }
     await client.fetchText("inv_use.php", {
       query: {
         which: "3",
@@ -176,6 +184,7 @@ export const TinkerTasks = [
   StockClovers,
   EatEggs,
   DrinkIPA,
+  AlertSeventeen,
   FarmChalk,
   Nightcap,
 ];
