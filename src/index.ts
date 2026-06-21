@@ -8,7 +8,7 @@ import { TinkerState } from "./lib/state.js";
 const kolClient = new Client(config.KOL_USER, config.KOL_PASS);
 await kolClient.login();
 await kolClient.loadGameData();
-const items = await loadRelevantItems();
+await loadRelevantItems();
 let state = new TinkerState(config.BANKED_CRAFT_FILE);
 
 const runTinker = async () => {
@@ -36,7 +36,7 @@ const runTinker = async () => {
     for (let task of TinkerTasks) {
       let taskIsDone = true;
       try {
-        taskIsDone = await task.done(kolClient, items, state);
+        taskIsDone = await task.done(kolClient, state);
       } catch (e) {
         console.log(`Status check for task ${task.name} failed: ${e}`);
         break;
@@ -45,7 +45,7 @@ const runTinker = async () => {
         console.log(`Executing task: ${task.name}`);
         attemptedTask = true;
         try {
-          const result = await task.execute(kolClient, items, state);
+          const result = await task.execute(kolClient, state);
           if (!result) {
             console.log(`Execution of task ${task.name} failed`);
           } else if (config.DEBUG) {

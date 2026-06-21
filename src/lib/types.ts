@@ -2,7 +2,9 @@ import { Client } from "kol.js";
 import { TinkerState } from "./state.js";
 import { Item } from "data-of-loathing";
 
-export type RelevantItems = {
+export type RelevantItemsUnloaded = { loaded: false };
+export type RelevantItemsLoaded = {
+  loaded: true;
   CHALK: Item;
   GUMSTRING: Item;
   TRINKET: Item;
@@ -12,17 +14,10 @@ export type RelevantItems = {
   PICKLEDEGG: Item;
   SEVENTEENBALL: Item;
 };
+export type RelevantItems = RelevantItemsUnloaded | RelevantItemsLoaded;
 
 export type Task = {
   name: string;
-  done: (
-    client: Client,
-    items: RelevantItems,
-    state: TinkerState,
-  ) => Promise<boolean>;
-  execute: (
-    client: Client,
-    items: RelevantItems,
-    state: TinkerState,
-  ) => Promise<boolean>;
+  done: (client: Client, state: TinkerState) => Promise<boolean>;
+  execute: (client: Client, state: TinkerState) => Promise<boolean>;
 };

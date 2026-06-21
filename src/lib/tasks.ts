@@ -1,10 +1,13 @@
 import { config } from "./config.js";
-import { Task } from "./types.js";
+import { RelevantItemsLoaded, Task } from "./types.js";
 import { Tinker } from "./tinkertask.js";
+import { relevantItems } from "./items.js";
+
+const items = relevantItems as RelevantItemsLoaded;
 
 const GetWorthless: Task = {
   name: "Get Worthless Trinkets",
-  done: async (client, items) => {
+  done: async (client) => {
     return (
       ((await client.inventory.get()).get(items.TRINKET) ?? 0) +
         ((await client.inventory.get()).get(items.KNICKNACK) ?? 0) +
@@ -12,7 +15,7 @@ const GetWorthless: Task = {
       3
     );
   },
-  execute: async (client, items) => {
+  execute: async (client) => {
     await client.fetchText("shop.php", {
       method: "GET",
       query: {
@@ -56,7 +59,7 @@ const GetClovers: Task = {
 
 const StockClovers: Task = {
   name: "Stock clovers in mall",
-  done: async (client, items) => {
+  done: async (client) => {
     return !(await client.inventory.get()).get(items.CLOVER);
   },
   execute: async (client) => {
@@ -81,7 +84,7 @@ const EatEggs: Task = {
   done: async (client) => {
     return client.fullness > 14;
   },
-  execute: async (client, items) => {
+  execute: async (client) => {
     await client.fetchText("shop.php", {
       method: "GET",
       query: {
@@ -136,7 +139,7 @@ const Nightcap: Task = {
   done: async (client) => {
     return client.inebriety > 14;
   },
-  execute: async (client, items, state) => {
+  execute: async (client, state) => {
     await client.fetchText("cafe.php", {
       method: "POST",
       query: {
