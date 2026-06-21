@@ -1,14 +1,16 @@
 import * as fs from "fs";
 
 export class TinkerState {
-  todayMap: Map<number, number>;
-  bankedMap: Map<number, number>;
-  craftsFile: string;
+  public todayMap: Map<number, number>;
+  public bankedMap: Map<number, number>;
+  public lastBeacon: number;
+  private craftsFile: string;
 
   constructor(craftsFile: string) {
     this.todayMap = new Map();
     this.bankedMap = new Map();
     this.craftsFile = craftsFile;
+    this.lastBeacon = Math.floor(Date.now() / 3600000);
     this.load();
   }
 

@@ -9,7 +9,7 @@ const kolClient = new Client(config.KOL_USER, config.KOL_PASS);
 await kolClient.login();
 await kolClient.loadGameData();
 await loadRelevantItems();
-let state = new TinkerState(config.BANKED_CRAFT_FILE);
+let state = new TinkerState(config.STATE_FILE);
 state.save();
 
 const runTinker = async () => {

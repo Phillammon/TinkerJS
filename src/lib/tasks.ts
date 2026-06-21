@@ -3,6 +3,19 @@ import { Task } from "./types.js";
 import { Tinker } from "./tinkertask.js";
 import { relevantItems } from "./items.js";
 
+const ChatBeacon: Task = {
+  name: "Get Worthless Trinkets",
+  done: async (client, state) =>
+    state.lastBeacon === Math.floor(Date.now() / 3600000),
+  execute: async (client, state) => {
+    await client.chat.macro(
+      `/trade Let me craft for you! ${config.DAILY_FREE_CRAFTS} turn-taking crafts per day free per player, just send me your crafting components!`,
+    );
+    state.lastBeacon = Math.floor(Date.now() / 3600000);
+    return true;
+  },
+};
+
 const GetWorthless: Task = {
   name: "Get Worthless Trinkets",
   done: async (client) => {
@@ -178,6 +191,7 @@ const Nightcap: Task = {
 
 export const TinkerTasks = [
   Tinker,
+  ChatBeacon,
   GetWorthless,
   GetClovers,
   StockClovers,

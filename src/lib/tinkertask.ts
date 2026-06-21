@@ -5,6 +5,7 @@ import { Task } from "./types.js";
 import { KmailMessage } from "kol.js/domains/KmailMailbox";
 import { relevantItems } from "./items.js";
 import { TinkerState } from "./state.js";
+import { config } from "./config.js";
 
 const methods = ["cook", "smith", "cocktail"];
 
@@ -81,12 +82,13 @@ const processChalk: (
       quantity: chalk,
     },
   });
-  const newCrafts = (state.bankedMap.get(id) ?? 0) + 10 * chalk;
+  const newCrafts =
+    (state.bankedMap.get(id) ?? 0) + config.CRAFTS_PER_CHALK * chalk;
   state.bankedMap.set(id, newCrafts);
   state.save();
   return {
     chalkUsed: chalk,
-    craftsAdded: chalk * 10,
+    craftsAdded: chalk * config.CRAFTS_PER_CHALK,
     bankedCrafts: newCrafts,
   };
 };
@@ -126,19 +128,20 @@ const attemptCrafting: (
     let components = items.map(([item]) => item);
     let componentQuantity = Math.min(...items.map(([_item, count]) => count));
     let availableCrafts =
-      (state.todayMap.get(id) ?? 100) + (state.bankedMap.get(id) ?? 0);
+      (state.todayMap.get(id) ?? config.DAILY_FREE_CRAFTS) +
+      (state.bankedMap.get(id) ?? 0);
     if (components.length === 1) {
       components = [components[0] as Item, components[0] as Item];
       componentQuantity = Math.floor(componentQuantity / 2);
     }
     if (availableCrafts === 0) {
       return {
-        result: `I detected crafting components, but you've used all your daily free crafts, and don't have any banked crafts left. You are granted ten banked crafts for every handful of hand chalk you send me- you would need to send ${Math.ceil(componentQuantity / 10)} handful${componentQuantity > 10 ? "s" : ""} of hand chalk to complete this crafting operation, or wait until tomorrow.`,
+        result: `I detected crafting components, but you've used all your daily free crafts, and don't have any banked crafts left. You are granted ten banked crafts for every handful of hand chalk you send me- you would need to send ${Math.ceil(componentQuantity / config.CRAFTS_PER_CHALK)} handful${componentQuantity > config.CRAFTS_PER_CHALK ? "s" : ""} of hand chalk to complete this crafting operation, or wait until tomorrow.`,
         craftsAttempted: 0,
         craftsSuccessful: 0,
         yieldedItems: items,
         remainingBanked: state.bankedMap.get(id) ?? 0,
-        remainingDaily: state.todayMap.get(id) ?? 100,
+        remainingDaily: state.todayMap.get(id) ?? config.DAILY_FREE_CRAFTS,
         dailyCraftsSpent: 0,
       };
     }
@@ -167,13 +170,14 @@ const attemptCrafting: (
         const attemptedCrafts = componentQuantity;
         const successfulCrafts = craftsToAttempt;
         const dailyCraftsSpent = Math.min(
-          state.todayMap.get(id) ?? 100,
+          state.todayMap.get(id) ?? config.DAILY_FREE_CRAFTS,
           successfulCrafts,
         );
         const bankedCraftsSpent = successfulCrafts - dailyCraftsSpent;
         state.todayMap.set(
           id,
-          (state.todayMap.get(id) ?? 100) - dailyCraftsSpent,
+          (state.todayMap.get(id) ?? config.DAILY_FREE_CRAFTS) -
+            dailyCraftsSpent,
         );
         state.bankedMap.set(
           id,
@@ -194,7 +198,7 @@ const attemptCrafting: (
             message = `Successfully crafted ${successfulCrafts}x ${successfulCrafts > 1 ? (createdItem.plural ?? createdItem.name) : createdItem.name}`;
           } else {
             const neededChalk = Math.ceil(
-              (attemptedCrafts - successfulCrafts) / 10,
+              (attemptedCrafts - successfulCrafts) / config.CRAFTS_PER_CHALK,
             );
             message = `I tried to craft ${attemptedCrafts}x ${attemptedCrafts > 1 ? (createdItem.plural ?? createdItem.name) : createdItem.name}, but you only have ${successfulCrafts} craft${successfulCrafts > 1 ? "s" : ""} left for today. To craft the rest, either send ${neededChalk} handful${neededChalk > 1 ? "s" : ""} of hand chalk along with the rest of the components, or wait for tomorrow.`;
           }
@@ -205,9 +209,9 @@ const attemptCrafting: (
           result: message,
           craftsAttempted: attemptedCrafts,
           craftsSuccessful: successfulCrafts,
-          yieldedItems: itemsToReturn,
+          yieldedItems: itemsToReturn as [Item, number][],
           remainingBanked: state.bankedMap.get(id) ?? 0,
-          remainingDaily: state.todayMap.get(id) ?? 100,
+          remainingDaily: state.todayMap.get(id) ?? config.DAILY_FREE_CRAFTS,
           dailyCraftsSpent: dailyCraftsSpent,
         };
       }
@@ -221,7 +225,7 @@ const attemptCrafting: (
         craftsSuccessful: 0,
         yieldedItems: items,
         remainingBanked: state.bankedMap.get(id) ?? 0,
-        remainingDaily: state.todayMap.get(id) ?? 100,
+        remainingDaily: state.todayMap.get(id) ?? config.DAILY_FREE_CRAFTS,
         dailyCraftsSpent: 0,
       };
     }

@@ -7,7 +7,7 @@ export const schema = {
     default: false,
   },
 
-  BANKED_CRAFT_FILE: {
+  STATE_FILE: {
     type: String,
     default: "tinker_crafts.json",
   },
@@ -20,6 +20,16 @@ export const schema = {
   OPERATOR_ID: {
     type: Number,
     optional: true,
+  },
+
+  // Tinkering values
+  CRAFTS_PER_CHALK: {
+    type: Number,
+    default: 10,
+  },
+  DAILY_FREE_CRAFTS: {
+    type: Number,
+    default: 100,
   },
 };
 
