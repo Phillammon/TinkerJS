@@ -1,15 +1,6 @@
 import { Item } from "data-of-loathing";
 import { gameData } from "kol.js";
-
-export type RelevantItems = {
-  CHALK: Item;
-  GUMSTRING: Item;
-  TRINKET: Item;
-  GEWGAW: Item;
-  KNICKNACK: Item;
-  CLOVER: Item;
-  PICKLEDEGG: Item;
-};
+import { RelevantItems } from "./types.js";
 
 export const loadRelevantItems: () => Promise<RelevantItems> = async () => ({
   CHALK: (await gameData.findItemById(1794)) as Item,
@@ -19,4 +10,5 @@ export const loadRelevantItems: () => Promise<RelevantItems> = async () => ({
   KNICKNACK: (await gameData.findItemById(45)) as Item,
   CLOVER: (await gameData.findItemById(10881)) as Item,
   PICKLEDEGG: (await gameData.findItemById(7032)) as Item,
+  SEVENTEENBALL: (await gameData.findItemById(2097)) as Item,
 });

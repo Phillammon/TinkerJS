@@ -9,7 +9,7 @@ const kolClient = new Client(config.KOL_USER, config.KOL_PASS);
 await kolClient.login();
 await kolClient.loadGameData();
 const items = await loadRelevantItems();
-let state: TinkerState = {};
+let state = new TinkerState(config.BANKED_CRAFT_FILE);
 
 const runTinker = async () => {
   while (true) {
@@ -19,7 +19,9 @@ const runTinker = async () => {
       await kolClient.login();
     }
     try {
-      console.log("Refreshing data.");
+      if (config.DEBUG) {
+        console.log("Refreshing data.");
+      }
       await kolClient.checkLoggedIn();
       await kolClient.inventory.get.refresh();
     } catch (e) {
@@ -44,18 +46,22 @@ const runTinker = async () => {
         attemptedTask = true;
         try {
           const result = await task.execute(kolClient, items, state);
-          console.log(
-            result ? "Task execution succeeded" : "Task execution failed",
-          );
+          if (!result) {
+            console.log(`Execution of task ${task.name} failed`);
+          } else if (config.DEBUG) {
+            console.log(`Successfully executed task ${task.name}`);
+          }
         } catch (e) {
-          `Task execution failed with exception: ${e}`;
+          `Execution of task ${task.name} failed with exception: ${e}`;
         }
         break;
       }
     }
 
     if (!attemptedTask) {
-      console.log("No task attempted. Waiting 30 seconds.");
+      if (config.DEBUG) {
+        console.log("No task attempted. Waiting 30 seconds.");
+      }
       await new Promise((resolve) => {
         setTimeout(resolve, 30000);
       });
