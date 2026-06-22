@@ -1,5 +1,5 @@
 import { Item } from "data-of-loathing";
-import { Client, gameData, success } from "kol.js";
+import { Client, gameData } from "kol.js";
 
 import { Task } from "./types.js";
 import { KmailMessage } from "kol.js/domains/KmailMailbox";
@@ -136,7 +136,7 @@ const attemptCrafting: (
     }
     if (availableCrafts === 0) {
       return {
-        result: `I detected crafting components, but you've used all your daily free crafts, and don't have any banked crafts left. You are granted ten banked crafts for every handful of hand chalk you send me- you would need to send ${Math.ceil(componentQuantity / config.CRAFTS_PER_CHALK)} handful${componentQuantity > config.CRAFTS_PER_CHALK ? "s" : ""} of hand chalk to complete this crafting operation, or wait until tomorrow.`,
+        result: `I detected crafting components, but you've used all your daily free crafts, and don't have any banked crafts left. You are granted ${config.CRAFTS_PER_CHALK} banked crafts for every handful of hand chalk you send me- you would need to send ${Math.ceil(componentQuantity / config.CRAFTS_PER_CHALK)} handful${componentQuantity > config.CRAFTS_PER_CHALK ? "s" : ""} of hand chalk to complete this crafting operation, or wait until tomorrow.`,
         craftsAttempted: 0,
         craftsSuccessful: 0,
         yieldedItems: items,
