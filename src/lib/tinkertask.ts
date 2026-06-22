@@ -50,12 +50,14 @@ export const Tinker: Task = {
           method: "POST",
           query: {
             towho: player.id,
+            contact: 0,
             note: `This package contains: ${quantity}x ${item.name}`,
             insidenote: "Thank you for tinkering!",
             whichpackage: 1,
             fromwhere: 0,
             howmany1: quantity,
             whichitem1: item.id,
+            sendmeat: "",
             action: "Yep.",
           },
         });
