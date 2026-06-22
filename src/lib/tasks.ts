@@ -31,7 +31,7 @@ const OpenGiftPackages: Task = {
       )
     ).every((val) => val === 0);
   },
-  execute: async (client, state) => {
+  execute: async (client) => {
     const packages = (
       await Promise.all(
         relevantItems.PACKAGES.map(async (giftpackage) => {
