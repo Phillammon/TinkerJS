@@ -1,5 +1,5 @@
 import { Item } from "data-of-loathing";
-import { Client, gameData } from "kol.js";
+import { Client, gameData, Player } from "kol.js";
 
 import { Task } from "./types.js";
 import { KmailMessage } from "kol.js/domains/KmailMailbox";
@@ -15,20 +15,14 @@ export const Tinker: Task = {
     return !(await client.kmail.fetch()).length;
   },
   execute: async (client, state) => {
-    const firstMail = (await client.kmail.fetch())[0];
-    console.log(`Processing Kmail from ${firstMail?.who.name}`);
-    const { chalk, otherItems } = extractItemsFromKmail(
-      firstMail as KmailMessage,
-    );
-    const chalkResult = await processChalk(
-      firstMail?.who.id as number,
-      chalk,
-      client,
-      state,
-    );
+    const mailToProcess = (await client.kmail.fetch())[0] as KmailMessage;
+    const player = (await mailToProcess?.who.fetch()) as Player.Profiled;
+    console.log(`Processing Kmail from ${player.name}`);
+    const { chalk, otherItems } = extractItemsFromKmail(mailToProcess);
+    const chalkResult = await processChalk(player.id, chalk, client, state);
 
     const craftResult = await attemptCrafting(
-      firstMail?.who.id as number,
+      player.id,
       otherItems,
       client,
       state,
@@ -40,14 +34,41 @@ export const Tinker: Task = {
     const craftMessage = `${craftResult.result}\n\n${craftResult.craftsSuccessful ? `This cost ${craftResult.dailyCraftsSpent} of your daily crafts${craftResult.craftsSuccessful > craftResult.dailyCraftsSpent ? ` and ${craftResult.craftsSuccessful - craftResult.dailyCraftsSpent} of your banked crafts` : ""}.` : "This did not cost any of your daily or banked crafts."}`;
     const remainingMessage = `You currently have ${craftResult.remainingDaily} daily craft${craftResult.remainingDaily === 1 ? "" : "s"} and ${craftResult.remainingBanked} banked craft${craftResult.remainingBanked === 1 ? "" : "s"} available.`;
 
-    await client.kmail.delete([firstMail?.id || 0]);
-    await client.kmail.send(
-      firstMail?.who.id as number,
-      `${chalkMessage ? `${chalkMessage}\n\n` : ""}${craftMessage}\n\n${remainingMessage}\n\nThank you for tinkering. Have a nice day!`,
-      {
-        items: new Map(craftResult.yieldedItems),
-      },
-    );
+    await client.kmail.delete([mailToProcess.id]);
+
+    if (player.inHardcore || player.inRonin) {
+      const yieldMessage = craftResult.yieldedItems.reduce(
+        (acc, curr) => `${acc}\n- ${curr[1]}x ${(curr[0] as Item).name}`,
+        "As you are in Ronin or Hardcore, you will recieve the following back in gift packages:",
+      );
+      await client.kmail.send(
+        player.id,
+        `${chalkMessage ? `${chalkMessage}\n\n` : ""}${craftMessage}\n\n${craftResult.yieldedItems.length ? `${yieldMessage}\n\n` : ""}${remainingMessage}\n\nThank you for tinkering. Have a nice day!`,
+      );
+      for (let [item, quantity] of craftResult.yieldedItems) {
+        await client.fetchText("town_sendgift.php", {
+          method: "POST",
+          query: {
+            towho: player.id,
+            note: `This package contains: ${quantity}x ${item.name}`,
+            insidenote: "Thank you for tinkering!",
+            whichpackage: 1,
+            fromwhere: 0,
+            howmany1: quantity,
+            whichitem1: item.id,
+            action: "Yep.",
+          },
+        });
+      }
+    } else {
+      await client.kmail.send(
+        player.id,
+        `${chalkMessage ? `${chalkMessage}\n\n` : ""}${craftMessage}\n\n${remainingMessage}\n\nThank you for tinkering. Have a nice day!`,
+        {
+          items: new Map(craftResult.yieldedItems),
+        },
+      );
+    }
 
     return true;
   },
