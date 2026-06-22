@@ -152,7 +152,9 @@ const attemptCrafting: (
   if (items.length > 2 || items.length === 0) {
     return {
       result:
-        "I don't know what to do with that many crafting components, sorry.",
+        items.length === 0
+          ? "I didn't see any crafting components, sorry."
+          : "I don't know what to do with that many crafting components, sorry. If you want me to do multi-stage crafting, send me each stage one by one, please.",
       craftsAttempted: 0,
       craftsSuccessful: 0,
       yieldedItems: items,
