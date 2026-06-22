@@ -31,6 +31,16 @@ export const schema = {
     type: Number,
     default: 100,
   },
+
+  // Time data (in seconds)
+  TRADE_BEACON_DELAY: {
+    type: Number,
+    default: 3600,
+  },
+  LOOP_DELAY: {
+    type: Number,
+    default: 60,
+  },
 };
 
 export type Env = EnvType<typeof schema>;
