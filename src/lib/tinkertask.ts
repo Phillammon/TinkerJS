@@ -18,7 +18,19 @@ export const Tinker: Task = {
     const mailToProcess = (await client.kmail.fetch())[0] as KmailMessage;
     const player = (await mailToProcess?.who.fetch()) as Player.Profiled;
     console.log(`Processing Kmail from ${player.name}`);
+    console.log(
+      `Message: ${mailToProcess.msg}${mailToProcess.insideNote ? `\n\n${mailToProcess.insideNote}` : ""}`,
+    );
     const { chalk, otherItems } = extractItemsFromKmail(mailToProcess);
+    if (chalk) {
+      console.log(`Detected ${chalk} chalk`);
+    }
+    if (otherItems.length) {
+      console.log(`Detected items:`);
+      for (let item of otherItems) {
+        console.log(`- ${item[1]}x ${item[0].name}`);
+      }
+    }
     const chalkResult = await processChalk(player.id, chalk, client, state);
 
     const craftResult = await attemptCrafting(
@@ -48,15 +60,15 @@ export const Tinker: Task = {
       for (let [item, quantity] of craftResult.yieldedItems) {
         await client.fetchText("town_sendgift.php", {
           method: "POST",
-          query: {
+          form: {
             towho: player.id,
             contact: 0,
             note: `This package contains: ${quantity}x ${item.name}`,
             insidenote: "Thank you for tinkering!",
             whichpackage: 1,
             fromwhere: 0,
-            howmany1: quantity,
-            whichitem1: item.id,
+            howmany1: `${quantity}`,
+            whichitem1: `${item.id}`,
             sendmeat: "",
             action: "Yep.",
           },
@@ -72,6 +84,12 @@ export const Tinker: Task = {
       );
     }
 
+    if (craftResult.yieldedItems) {
+      console.log(`Yielded and returned items:`);
+      for (let item of otherItems) {
+        console.log(`- ${item[1]}x ${item[0].name}`);
+      }
+    }
     return true;
   },
 };
@@ -131,12 +149,6 @@ const attemptCrafting: (
   remainingBanked: number;
   dailyCraftsSpent: number;
 }> = async (id, items, client, state) => {
-  if (items.length) {
-    console.log(`Detected items:`);
-    for (let item of items) {
-      console.log(`- ${item[1]}x ${item[0].name}`);
-    }
-  }
   if (items.length > 2 || items.length === 0) {
     return {
       result:
