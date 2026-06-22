@@ -59,7 +59,8 @@ const extractItemsFromKmail: (kmail: KmailMessage) => {
 } = (kmail: KmailMessage) => {
   const chalkCount = kmail.items.get(relevantItems.CHALK);
   const items = Array.from(kmail.items.entries() || []).filter(
-    ([item]) => item !== relevantItems.CHALK,
+    ([item]) =>
+      ![relevantItems.CHALK, ...relevantItems.PACKAGES].includes(item),
   );
   return { chalk: chalkCount ?? 0, otherItems: items };
 };

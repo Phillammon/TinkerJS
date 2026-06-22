@@ -2,16 +2,58 @@ import { config } from "./config.js";
 import { Task } from "./types.js";
 import { Tinker } from "./tinkertask.js";
 import { relevantItems } from "./items.js";
+import { Item } from "data-of-loathing";
 
 const ChatBeacon: Task = {
-  name: "Get Worthless Trinkets",
+  name: "Announce In Chat",
   done: async (client, state) =>
-    state.lastBeacon === Math.floor(Date.now() / 3600000),
+    state.lastBeacon ===
+    Math.floor(Date.now() / (1000 * config.TRADE_BEACON_DELAY)),
   execute: async (client, state) => {
     await client.chat.macro(
       `/trade Let me craft for you! ${config.DAILY_FREE_CRAFTS} turn-taking crafts per day free per player, just send me your crafting components!`,
     );
-    state.lastBeacon = Math.floor(Date.now() / 3600000);
+    state.lastBeacon = Math.floor(
+      Date.now() / (1000 * config.TRADE_BEACON_DELAY),
+    );
+    return true;
+  },
+};
+
+const OpenGiftPackages: Task = {
+  name: "Open Gift Packages",
+  done: async (client) => {
+    return (
+      await Promise.all(
+        relevantItems.PACKAGES.map(async (trinket) => {
+          return (await client.inventory.get()).get(trinket) ?? 0;
+        }),
+      )
+    ).every((val) => val === 0);
+  },
+  execute: async (client, state) => {
+    const packages = (
+      await Promise.all(
+        relevantItems.PACKAGES.map(async (giftpackage) => {
+          return [
+            giftpackage,
+            (await client.inventory.get()).get(giftpackage) ?? 0,
+          ];
+        }),
+      )
+    )
+      .filter(([giftpackage, quantity]) => (quantity as number) > 0)
+      .map(([giftpackage]) => giftpackage);
+
+    for (const giftpackage of packages) {
+      await client.fetchText("inv_use.php", {
+        method: "GET",
+        query: {
+          which: 3,
+          whichitem: (giftpackage as Item).id,
+        },
+      });
+    }
     return true;
   },
 };
@@ -20,11 +62,12 @@ const GetWorthless: Task = {
   name: "Get Worthless Trinkets",
   done: async (client) => {
     return (
-      ((await client.inventory.get()).get(relevantItems.TRINKET) ?? 0) +
-        ((await client.inventory.get()).get(relevantItems.KNICKNACK) ?? 0) +
-        ((await client.inventory.get()).get(relevantItems.GEWGAW) ?? 0) >=
-      3
-    );
+      await Promise.all(
+        relevantItems.TRINKETS.map(async (trinket) => {
+          return (await client.inventory.get()).get(trinket) ?? 0;
+        }),
+      )
+    ).every((val) => val > 0);
   },
   execute: async (client) => {
     await client.fetchText("shop.php", {
@@ -190,6 +233,7 @@ const Nightcap: Task = {
 };
 
 export const TinkerTasks = [
+  OpenGiftPackages,
   Tinker,
   ChatBeacon,
   GetWorthless,

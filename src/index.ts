@@ -28,7 +28,7 @@ const runTinker = async () => {
     } catch (e) {
       console.log(`Data refresh failed: ${e}`);
       await new Promise((resolve) => {
-        setTimeout(resolve, 30000);
+        setTimeout(resolve, 1000 * config.LOOP_DELAY);
       });
       continue;
     }
@@ -61,10 +61,10 @@ const runTinker = async () => {
 
     if (!attemptedTask) {
       if (config.DEBUG) {
-        console.log("No task attempted. Waiting 30 seconds.");
+        console.log(`No task attempted. Waiting ${config.LOOP_DELAY} seconds.`);
       }
       await new Promise((resolve) => {
-        setTimeout(resolve, 30000);
+        setTimeout(resolve, 1000 * config.LOOP_DELAY);
       });
     }
   }

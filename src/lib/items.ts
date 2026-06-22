@@ -10,54 +10,47 @@ export class RelevantItems {
     }
     return this._CHALK;
   }
-  _GUMSTRING?: Item;
+  private _GUMSTRING?: Item;
   public get GUMSTRING(): Item {
     if (!this.loaded || !this._GUMSTRING) {
       throw "Relevant items not loaded";
     }
     return this._GUMSTRING;
   }
-  _TRINKET?: Item;
-  public get TRINKET(): Item {
-    if (!this.loaded || !this._TRINKET) {
+  private _TRINKETS?: Item[];
+  public get TRINKETS(): Item[] {
+    if (!this.loaded || !this._TRINKETS) {
       throw "Relevant items not loaded";
     }
-    return this._TRINKET;
+    return this._TRINKETS;
   }
-  _GEWGAW?: Item;
-  public get GEWGAW(): Item {
-    if (!this.loaded || !this._GEWGAW) {
-      throw "Relevant items not loaded";
-    }
-    return this._GEWGAW;
-  }
-  _KNICKNACK?: Item;
-  public get KNICKNACK(): Item {
-    if (!this.loaded || !this._KNICKNACK) {
-      throw "Relevant items not loaded";
-    }
-    return this._KNICKNACK;
-  }
-  _CLOVER?: Item;
+  private _CLOVER?: Item;
   public get CLOVER(): Item {
     if (!this.loaded || !this._CLOVER) {
       throw "Relevant items not loaded";
     }
     return this._CLOVER;
   }
-  _PICKLEDEGG?: Item;
+  private _PICKLEDEGG?: Item;
   public get PICKLEDEGG(): Item {
     if (!this.loaded || !this._PICKLEDEGG) {
       throw "Relevant items not loaded";
     }
     return this._PICKLEDEGG;
   }
-  _SEVENTEENBALL?: Item;
+  private _SEVENTEENBALL?: Item;
   public get SEVENTEENBALL(): Item {
     if (!this.loaded || !this._SEVENTEENBALL) {
       throw "Relevant items not loaded";
     }
     return this._SEVENTEENBALL;
+  }
+  private _PACKAGES?: Item[];
+  public get PACKAGES(): Item[] {
+    if (!this.loaded || !this._PACKAGES) {
+      throw "Relevant items not loaded";
+    }
+    return this._PACKAGES;
   }
 
   constructor() {
@@ -68,12 +61,29 @@ export class RelevantItems {
     this.loaded = true;
     this._CHALK = (await gameData.findItemById(1794)) as Item;
     this._GUMSTRING = (await gameData.findItemById(23)) as Item;
-    this._TRINKET = (await gameData.findItemById(43)) as Item;
-    this._GEWGAW = (await gameData.findItemById(44)) as Item;
-    this._KNICKNACK = (await gameData.findItemById(45)) as Item;
+    this._TRINKETS = [
+      (await gameData.findItemById(43)) as Item,
+      (await gameData.findItemById(44)) as Item,
+      (await gameData.findItemById(45)) as Item,
+    ];
     this._CLOVER = (await gameData.findItemById(10881)) as Item;
     this._PICKLEDEGG = (await gameData.findItemById(7032)) as Item;
     this._SEVENTEENBALL = (await gameData.findItemById(2097)) as Item;
+    this._PACKAGES = [
+      (await gameData.findItemById(1167)) as Item,
+      (await gameData.findItemById(1168)) as Item,
+      (await gameData.findItemById(1169)) as Item,
+      (await gameData.findItemById(1170)) as Item,
+      (await gameData.findItemById(1171)) as Item,
+      (await gameData.findItemById(1172)) as Item,
+      (await gameData.findItemById(1173)) as Item,
+      (await gameData.findItemById(1174)) as Item,
+      (await gameData.findItemById(1175)) as Item,
+      (await gameData.findItemById(1176)) as Item,
+      (await gameData.findItemById(1177)) as Item,
+      (await gameData.findItemById(1460)) as Item, // Valentines Box
+      // (await gameData.findItemById(5434)) as Item, // DNOTC Box
+    ];
   }
 }
 

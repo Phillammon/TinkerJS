@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import { config } from "./config.js";
 
 export class TinkerState {
   public todayMap: Map<number, number>;
@@ -10,7 +11,9 @@ export class TinkerState {
     this.todayMap = new Map();
     this.bankedMap = new Map();
     this.craftsFile = craftsFile;
-    this.lastBeacon = Math.floor(Date.now() / 3600000);
+    this.lastBeacon = Math.floor(
+      Date.now() / (1000 * config.TRADE_BEACON_DELAY),
+    );
     this.load();
   }
 
