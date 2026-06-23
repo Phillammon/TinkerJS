@@ -84,7 +84,7 @@ export const Tinker: Task = {
       );
     }
 
-    if (craftResult.yieldedItems) {
+    if (craftResult.yieldedItems.length) {
       console.log(`Yielded and returned items:`);
       for (let item of craftResult.yieldedItems) {
         console.log(`- ${item[1]}x ${item[0].name}`);
