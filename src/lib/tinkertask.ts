@@ -44,14 +44,14 @@ export const Tinker: Task = {
       ? `Detected ${chalkResult.chalkUsed} handful${chalkResult.chalkUsed === 1 ? "" : "s"} of hand chalk. ${chalkResult.craftsAdded} crafts were added to your banked crafts pool.`
       : null;
     const craftMessage = `${craftResult.result}\n\n${craftResult.craftsSuccessful ? `This cost ${craftResult.dailyCraftsSpent} of your daily crafts${craftResult.craftsSuccessful > craftResult.dailyCraftsSpent ? ` and ${craftResult.craftsSuccessful - craftResult.dailyCraftsSpent} of your banked crafts` : ""}.` : "This did not cost any of your daily or banked crafts."}`;
-    const remainingMessage = `You currently have ${craftResult.remainingDaily} daily craft${craftResult.remainingDaily === 1 ? "" : "s"} and ${craftResult.remainingBanked} banked craft${craftResult.remainingBanked === 1 ? "" : "s"} available.`;
+    const remainingMessage = `You currently have ${craftResult.remainingDaily} daily craft${craftResult.remainingDaily === 1 ? "" : "s"} and ${craftResult.remainingBanked} banked craft${craftResult.remainingBanked === 1 ? "" : "s"} available. (You can send me handfuls of hand chalk to bank ${config.CRAFTS_PER_CHALK} crafts per handful)`;
 
     await client.kmail.delete([mailToProcess.id]);
 
     if (player.inHardcore || player.inRonin) {
       const yieldMessage = craftResult.yieldedItems.reduce(
         (acc, curr) => `${acc}\n- ${curr[1]}x ${(curr[0] as Item).name}`,
-        "As you are in Ronin or Hardcore, you will recieve the following back in gift packages:",
+        "As you are in Ronin, Hardcore, or Legacy of Loathing, you will recieve the following back in gift packages:",
       );
       await client.kmail.send(
         player.id,
