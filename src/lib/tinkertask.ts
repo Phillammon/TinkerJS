@@ -73,6 +73,21 @@ export const Tinker: Task = {
             action: "Yep.",
           },
         });
+        if (mailToProcess.meat) {
+          await client.fetchText("town_sendgift.php", {
+            method: "POST",
+            form: {
+              towho: player.id,
+              contact: 0,
+              note: `This package contains: ${mailToProcess.meat} meat`,
+              insidenote: "Thank you for tinkering!",
+              whichpackage: 1,
+              fromwhere: 0,
+              sendmeat: mailToProcess.meat,
+              action: "Yep.",
+            },
+          });
+        }
       }
     } else {
       await client.kmail.send(
@@ -80,6 +95,7 @@ export const Tinker: Task = {
         `${chalkMessage ? `${chalkMessage}\n\n` : ""}${craftMessage}\n\n${remainingMessage}\n\nThank you for tinkering. Have a nice day!`,
         {
           items: new Map(craftResult.yieldedItems),
+          ...(mailToProcess.meat ? { meat: mailToProcess.meat } : {}),
         },
       );
     }
