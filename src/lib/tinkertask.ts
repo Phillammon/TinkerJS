@@ -48,7 +48,11 @@ export const Tinker: Task = {
 
     await client.kmail.delete([mailToProcess.id]);
 
-    if (player.inHardcore || player.inRonin) {
+    if (
+      player.inHardcore ||
+      player.inRonin ||
+      player.path === "Legacy of Loathing"
+    ) {
       const yieldMessage = craftResult.yieldedItems.reduce(
         (acc, curr) => `${acc}\n- ${curr[1]}x ${(curr[0] as Item).name}`,
         "As you are in Ronin, Hardcore, or Legacy of Loathing, you will recieve the following back in gift packages:",
