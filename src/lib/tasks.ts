@@ -11,7 +11,7 @@ const ChatBeacon: Task = {
     Math.floor(Date.now() / (1000 * config.TRADE_BEACON_DELAY)),
   execute: async (client, state) => {
     await client.chat.macro(
-      `/trade Let me craft for you! ${config.DAILY_FREE_CRAFTS} turn-taking crafts per day free per player, just send me your crafting components!`,
+      `/trade Let me craft for you! ${config.DAILY_FREE_CRAFTS} turn-taking crafts per day free per player, just send me your crafting components! (I am a bot, contact >>2393910 if I break)`,
     );
     state.lastBeacon = Math.floor(
       Date.now() / (1000 * config.TRADE_BEACON_DELAY),
