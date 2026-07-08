@@ -31,6 +31,14 @@ export const schema = {
     type: Number,
     default: 100,
   },
+  CRAFT_TEA_TO_MAINTAIN: {
+    type: Number,
+    default: 1000000,
+  },
+  MAX_CRAFTS_PER_KMAIL: {
+    type: Number,
+    default: 100000,
+  },
 
   // Time data (in seconds)
   TRADE_BEACON_DELAY: {

@@ -1,7 +1,7 @@
 import { config } from "./config.js";
 import { Task } from "./types.js";
 import { Tinker } from "./tinkertask.js";
-import { relevantItems } from "./items.js";
+import { relevantItemsAndEffects } from "./gameconstants.js";
 import { Item } from "data-of-loathing";
 
 const ChatBeacon: Task = {
@@ -10,6 +10,9 @@ const ChatBeacon: Task = {
     state.lastBeacon ===
     Math.floor(Date.now() / (1000 * config.TRADE_BEACON_DELAY)),
   execute: async (client, state) => {
+    for (let i = 0; i < 100; i++) {
+      await client.chat.macro(`/talkie Spam out chat effects`);
+    }
     await client.chat.macro(
       `/trade Let me craft for you! ${config.DAILY_FREE_CRAFTS} turn-taking crafts per day free per player, just send me your crafting components! (I am a bot, contact >>2393910 if I break)`,
     );
@@ -20,12 +23,46 @@ const ChatBeacon: Task = {
   },
 };
 
+const UseChalk: Task = {
+  name: "Use Handfuls of Hand Chalk",
+  done: async (client) => {
+    return (
+      (await client.effects.remainingEffectTurns(
+        relevantItemsAndEffects.CRAFTTEA,
+      )) > config.CRAFT_TEA_TO_MAINTAIN ||
+      ((await client.inventory.get()).get(relevantItemsAndEffects.CHALK) ??
+        0) === 0
+    );
+  },
+  execute: async (client) => {
+    const chalkToUse = Math.min(
+      (await client.inventory.get()).get(relevantItemsAndEffects.CHALK) ?? 0,
+      Math.ceil(
+        (config.CRAFT_TEA_TO_MAINTAIN -
+          (await client.effects.remainingEffectTurns(
+            relevantItemsAndEffects.CRAFTTEA,
+          ))) /
+          69,
+      ),
+    );
+    await client.fetchText("multiuse.php", {
+      query: {
+        method: "GET",
+        quantity: `${chalkToUse}`,
+        whichitem: "1794",
+        action: "useitem",
+      },
+    });
+    return true;
+  },
+};
+
 const OpenGiftPackages: Task = {
   name: "Open Gift Packages",
   done: async (client) => {
     return (
       await Promise.all(
-        relevantItems.PACKAGES.map(async (trinket) => {
+        relevantItemsAndEffects.PACKAGES.map(async (trinket) => {
           return (await client.inventory.get()).get(trinket) ?? 0;
         }),
       )
@@ -34,7 +71,7 @@ const OpenGiftPackages: Task = {
   execute: async (client) => {
     const packages = (
       await Promise.all(
-        relevantItems.PACKAGES.map(async (giftpackage) => {
+        relevantItemsAndEffects.PACKAGES.map(async (giftpackage) => {
           return [
             giftpackage,
             (await client.inventory.get()).get(giftpackage) ?? 0,
@@ -63,7 +100,7 @@ const GetWorthless: Task = {
   done: async (client) => {
     return (
       await Promise.all(
-        relevantItems.TRINKETS.map(async (trinket) => {
+        relevantItemsAndEffects.TRINKETS.map(async (trinket) => {
           return (await client.inventory.get()).get(trinket) ?? 0;
         }),
       )
@@ -114,7 +151,7 @@ const GetClovers: Task = {
 const StockClovers: Task = {
   name: "Stock clovers in mall",
   done: async (client) => {
-    return !(await client.inventory.get()).get(relevantItems.CLOVER);
+    return !(await client.inventory.get()).get(relevantItemsAndEffects.CLOVER);
   },
   execute: async (client) => {
     await client.fetchText("backoffice.php", {
@@ -148,7 +185,8 @@ const EatEggs: Task = {
         whichrow: 646,
       },
     });
-    return (await client.consumption.eat(relevantItems.PICKLEDEGG)).success;
+    return (await client.consumption.eat(relevantItemsAndEffects.PICKLEDEGG))
+      .success;
   },
 };
 
@@ -173,7 +211,9 @@ const DrinkIPA: Task = {
 const AlertSeventeen: Task = {
   name: "Alert 17-Ball",
   done: async (client) => {
-    return !(await client.inventory.get()).get(relevantItems.SEVENTEENBALL);
+    return !(await client.inventory.get()).get(
+      relevantItemsAndEffects.SEVENTEENBALL,
+    );
   },
   execute: async (client) => {
     console.log("FOUND AND CLOSETED 17-BALL");
@@ -183,7 +223,7 @@ const AlertSeventeen: Task = {
         "Seventeen-Ball Found\nSeventeen-Ball Found\nSeventeen-Ball Found\nSeventeen-Ball Found\nSeventeen-Ball Found\nSeventeen-Ball Found",
       );
     }
-    client.closet.deposit(relevantItems.SEVENTEENBALL, 1);
+    client.closet.deposit(relevantItemsAndEffects.SEVENTEENBALL, 1);
     return true;
   },
 };
@@ -233,6 +273,7 @@ const Nightcap: Task = {
 };
 
 export const TinkerTasks = [
+  UseChalk,
   OpenGiftPackages,
   Tinker,
   ChatBeacon,

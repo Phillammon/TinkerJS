@@ -1,56 +1,39 @@
-import { Item } from "data-of-loathing";
+import { Effect, Item } from "data-of-loathing";
 import { gameData } from "kol.js";
 
-export class RelevantItems {
+export class RelevantItemsAndEffects {
   public loaded: boolean;
   private _CHALK?: Item | undefined;
   public get CHALK(): Item {
-    if (!this.loaded || !this._CHALK) {
-      throw "Relevant items not loaded";
-    }
-    return this._CHALK;
+    return this.getIfLoaded<Item>(this._CHALK);
   }
   private _GUMSTRING?: Item;
   public get GUMSTRING(): Item {
-    if (!this.loaded || !this._GUMSTRING) {
-      throw "Relevant items not loaded";
-    }
-    return this._GUMSTRING;
+    return this.getIfLoaded<Item>(this._GUMSTRING);
   }
   private _TRINKETS?: Item[];
   public get TRINKETS(): Item[] {
-    if (!this.loaded || !this._TRINKETS) {
-      throw "Relevant items not loaded";
-    }
-    return this._TRINKETS;
+    return this.getIfLoaded<Item[]>(this._TRINKETS);
   }
   private _CLOVER?: Item;
   public get CLOVER(): Item {
-    if (!this.loaded || !this._CLOVER) {
-      throw "Relevant items not loaded";
-    }
-    return this._CLOVER;
+    return this.getIfLoaded<Item>(this._CLOVER);
   }
   private _PICKLEDEGG?: Item;
   public get PICKLEDEGG(): Item {
-    if (!this.loaded || !this._PICKLEDEGG) {
-      throw "Relevant items not loaded";
-    }
-    return this._PICKLEDEGG;
+    return this.getIfLoaded<Item>(this._PICKLEDEGG);
   }
   private _SEVENTEENBALL?: Item;
   public get SEVENTEENBALL(): Item {
-    if (!this.loaded || !this._SEVENTEENBALL) {
-      throw "Relevant items not loaded";
-    }
-    return this._SEVENTEENBALL;
+    return this.getIfLoaded<Item>(this._SEVENTEENBALL);
   }
   private _PACKAGES?: Item[];
   public get PACKAGES(): Item[] {
-    if (!this.loaded || !this._PACKAGES) {
-      throw "Relevant items not loaded";
-    }
-    return this._PACKAGES;
+    return this.getIfLoaded<Item[]>(this._PACKAGES);
+  }
+  private _CRAFTTEA?: Effect;
+  public get CRAFTTEA(): Effect {
+    return this.getIfLoaded<Effect>(this._CRAFTTEA);
   }
 
   constructor() {
@@ -84,11 +67,19 @@ export class RelevantItems {
       (await gameData.findItemById(1460)) as Item, // Valentines Box
       // (await gameData.findItemById(5434)) as Item, // DNOTC Box
     ];
+    this._CRAFTTEA = (await gameData.findEffectByName("Craft Tea")) as Effect;
+  }
+
+  private getIfLoaded<T>(variable: T | undefined): T {
+    if (!this.loaded || !variable) {
+      throw "Relevant items and effects not loaded";
+    }
+    return variable;
   }
 }
 
-export const relevantItems = new RelevantItems();
+export const relevantItemsAndEffects = new RelevantItemsAndEffects();
 
-export const loadRelevantItems: () => Promise<void> = async () => {
-  await relevantItems.load();
+export const loadRelevantItemsAndEffects: () => Promise<void> = async () => {
+  await relevantItemsAndEffects.load();
 };

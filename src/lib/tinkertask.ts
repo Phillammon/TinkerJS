@@ -3,7 +3,7 @@ import { Client, gameData, Player } from "kol.js";
 
 import { Task } from "./types.js";
 import { KmailMessage } from "kol.js/domains/KmailMailbox";
-import { relevantItems } from "./items.js";
+import { relevantItemsAndEffects } from "./gameconstants.js";
 import { TinkerState } from "./state.js";
 import { config } from "./config.js";
 
@@ -40,8 +40,8 @@ export const Tinker: Task = {
       state,
     );
 
-    const chalkMessage = chalkResult.chalkUsed
-      ? `Detected ${chalkResult.chalkUsed} handful${chalkResult.chalkUsed === 1 ? "" : "s"} of hand chalk. ${chalkResult.craftsAdded} crafts were added to your banked crafts pool.`
+    const chalkMessage = chalkResult.chalkFound
+      ? `Detected ${chalkResult.chalkFound} handful${chalkResult.chalkFound === 1 ? "" : "s"} of hand chalk. ${chalkResult.craftsAdded} crafts were added to your banked crafts pool.`
       : null;
     const craftMessage = `${craftResult.result}\n\n${craftResult.craftsSuccessful ? `This cost ${craftResult.dailyCraftsSpent} of your daily crafts${craftResult.craftsSuccessful > craftResult.dailyCraftsSpent ? ` and ${craftResult.craftsSuccessful - craftResult.dailyCraftsSpent} of your banked crafts` : ""}.` : "This did not cost any of your daily or banked crafts."}`;
     const remainingMessage = `You currently have ${craftResult.remainingDaily} daily craft${craftResult.remainingDaily === 1 ? "" : "s"} and ${craftResult.remainingBanked} banked craft${craftResult.remainingBanked === 1 ? "" : "s"} available. (You can send me handfuls of hand chalk to bank ${config.CRAFTS_PER_CHALK} crafts per handful)`;
@@ -118,10 +118,13 @@ const extractItemsFromKmail: (kmail: KmailMessage) => {
   chalk: number;
   otherItems: [Item, number][];
 } = (kmail: KmailMessage) => {
-  const chalkCount = kmail.items.get(relevantItems.CHALK);
+  const chalkCount = kmail.items.get(relevantItemsAndEffects.CHALK);
   const items = Array.from(kmail.items.entries() || []).filter(
     ([item]) =>
-      ![relevantItems.CHALK, ...relevantItems.PACKAGES].includes(item),
+      ![
+        relevantItemsAndEffects.CHALK,
+        ...relevantItemsAndEffects.PACKAGES,
+      ].includes(item),
   );
   return { chalk: chalkCount ?? 0, otherItems: items };
 };
@@ -132,24 +135,16 @@ const processChalk: (
   client: Client,
   state: TinkerState,
 ) => Promise<{
-  chalkUsed: number;
+  chalkFound: number;
   craftsAdded: number;
   bankedCrafts: number;
 }> = async (id, chalk, client, state) => {
-  await client.fetchText("multiuse.php", {
-    query: {
-      method: "GET",
-      action: "useitem",
-      whichitem: relevantItems.CHALK.id,
-      quantity: chalk,
-    },
-  });
   const newCrafts =
     (state.bankedMap.get(id) ?? 0) + config.CRAFTS_PER_CHALK * chalk;
   state.bankedMap.set(id, newCrafts);
   state.save();
   return {
-    chalkUsed: chalk,
+    chalkFound: chalk,
     craftsAdded: chalk * config.CRAFTS_PER_CHALK,
     bankedCrafts: newCrafts,
   };
@@ -203,7 +198,11 @@ const attemptCrafting: (
         dailyCraftsSpent: 0,
       };
     }
-    const craftsToAttempt = Math.min(componentQuantity, availableCrafts);
+    const craftsToAttempt = Math.min(
+      componentQuantity,
+      availableCrafts,
+      config.MAX_CRAFTS_PER_KMAIL,
+    );
     let creationResult = null;
 
     for (let method of methods) {
@@ -262,6 +261,12 @@ const attemptCrafting: (
           }
         } else {
           message = `I successfully crafted ${successfulCrafts}x ${createdItem.name}, but those aren't tradeable, so I can't send them back. Sorry.`;
+        }
+        if (
+          attemptedCrafts === config.MAX_CRAFTS_PER_KMAIL &&
+          attemptedCrafts < Math.min(componentQuantity, availableCrafts)
+        ) {
+          message += `\n\n(I only attempt a maximum of ${config.MAX_CRAFTS_PER_KMAIL} crafts per kmail. If you want to craft more items than that, please split them up into multiple kmails.)`;
         }
         return {
           result: message,

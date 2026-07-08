@@ -1,14 +1,14 @@
 import { Client } from "kol.js";
 
 import { config } from "./lib/config.js";
-import { loadRelevantItems } from "./lib/items.js";
+import { loadRelevantItemsAndEffects } from "./lib/gameconstants.js";
 import { TinkerTasks } from "./lib/tasks.js";
 import { TinkerState } from "./lib/state.js";
 
 const kolClient = new Client(config.KOL_USER, config.KOL_PASS);
 await kolClient.login();
 await kolClient.loadGameData();
-await loadRelevantItems();
+await loadRelevantItemsAndEffects();
 let state = new TinkerState(config.STATE_FILE);
 state.save();
 
