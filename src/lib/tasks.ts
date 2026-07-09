@@ -4,6 +4,32 @@ import { Tinker } from "./tinkertask.js";
 import { relevantItemsAndEffects } from "./gameconstants.js";
 import { Item } from "data-of-loathing";
 
+const DetectRollover: Task = {
+  name: "Detect Rollover",
+  done: async (client) => {
+    return client.inebriety > 0;
+  },
+  execute: async (client, state) => {
+    await client.fetchText("cafe.php", {
+      method: "POST",
+      query: {
+        cafeid: "2",
+        action: "CONSUME!",
+        whichitem: "-3",
+      },
+    });
+    state.rollover();
+    await client.fetchText("inv_use.php", {
+      query: {
+        method: "GET",
+        which: "3",
+        whichitem: "10917",
+      },
+    });
+    return true;
+  },
+};
+
 const ChatBeacon: Task = {
   name: "Announce In Chat",
   done: async (client, state) =>
@@ -260,19 +286,12 @@ const Nightcap: Task = {
         whichitem: "-3",
       },
     });
-    state.rollover();
-    await client.fetchText("inv_use.php", {
-      query: {
-        method: "GET",
-        which: "3",
-        whichitem: "10917",
-      },
-    });
     return true;
   },
 };
 
 export const TinkerTasks = [
+  DetectRollover,
   UseChalk,
   OpenGiftPackages,
   Tinker,
