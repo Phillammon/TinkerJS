@@ -29,7 +29,7 @@ const UseChalk: Task = {
     return (
       (await client.effects.remainingEffectTurns(
         relevantItemsAndEffects.CRAFTTEA,
-      )) > config.CRAFT_TEA_TO_MAINTAIN ||
+      )) >= config.CRAFT_TEA_TO_MAINTAIN ||
       ((await client.inventory.get()).get(relevantItemsAndEffects.CHALK) ??
         0) === 0
     );
