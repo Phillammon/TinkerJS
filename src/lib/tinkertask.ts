@@ -43,7 +43,7 @@ export const Tinker: Task = {
     const chalkMessage = chalkResult.chalkFound
       ? `Detected ${chalkResult.chalkFound} handful${chalkResult.chalkFound === 1 ? "" : "s"} of hand chalk. ${chalkResult.craftsAdded} crafts were added to your banked crafts pool.`
       : null;
-    const craftMessage = `${craftResult.result}\n\n${craftResult.craftsSuccessful ? `This cost ${craftResult.dailyCraftsSpent} of your daily crafts${craftResult.craftsSuccessful > craftResult.dailyCraftsSpent ? ` and ${craftResult.craftsSuccessful - craftResult.dailyCraftsSpent} of your banked crafts` : ""}.` : "This did not cost any of your daily or banked crafts."}`;
+    const craftMessage = `${craftResult.result}\n\n${craftResult.bankedCraftsSpent || craftResult.dailyCraftsSpent ? `This cost ${craftResult.dailyCraftsSpent} of your daily crafts${craftResult.craftsSuccessful > craftResult.dailyCraftsSpent ? ` and ${craftResult.bankedCraftsSpent} of your banked crafts` : ""}.` : "This did not cost any of your daily or banked crafts."}`;
     const remainingMessage = `You currently have ${craftResult.remainingDaily} daily craft${craftResult.remainingDaily === 1 ? "" : "s"} and ${craftResult.remainingBanked} banked craft${craftResult.remainingBanked === 1 ? "" : "s"} available. (You can send me handfuls of hand chalk to bank ${config.CRAFTS_PER_CHALK} crafts per handful)`;
 
     await client.kmail.delete([mailToProcess.id]);
@@ -163,6 +163,7 @@ const attemptCrafting: (
   remainingDaily: number;
   remainingBanked: number;
   dailyCraftsSpent: number;
+  bankedCraftsSpent: number;
 }> = async (id, items, client, state) => {
   if (items.length > 2 || items.length === 0) {
     return {
@@ -176,6 +177,7 @@ const attemptCrafting: (
       remainingBanked: state.bankedMap.get(id) ?? 0,
       remainingDaily: state.todayMap.get(id) ?? 100,
       dailyCraftsSpent: 0,
+      bankedCraftsSpent: 0,
     };
   } else {
     let components = items.map(([item]) => item);
@@ -196,6 +198,7 @@ const attemptCrafting: (
         remainingBanked: state.bankedMap.get(id) ?? 0,
         remainingDaily: state.todayMap.get(id) ?? config.DAILY_FREE_CRAFTS,
         dailyCraftsSpent: 0,
+        bankedCraftsSpent: 0,
       };
     }
     const craftsToAttempt = Math.min(
@@ -204,6 +207,7 @@ const attemptCrafting: (
       config.MAX_CRAFTS_PER_KMAIL,
     );
     let creationResult = null;
+    let usedTea = false;
 
     for (let method of methods) {
       const result = await client.fetchText("craft.php", {
@@ -217,6 +221,7 @@ const attemptCrafting: (
         },
       });
       creationResult = result.match(/descitem\([0-9]+\)/);
+      usedTea = !!result.match(/eff\(\"5b0e09a1f70166801bef5436b5abd745\"\)/);
       if (creationResult) break;
     }
     if (creationResult) {
@@ -226,21 +231,27 @@ const attemptCrafting: (
       if (createdItem) {
         const attemptedCrafts = componentQuantity;
         const successfulCrafts = craftsToAttempt;
-        const dailyCraftsSpent = Math.min(
-          state.todayMap.get(id) ?? config.DAILY_FREE_CRAFTS,
-          successfulCrafts,
-        );
-        const bankedCraftsSpent = successfulCrafts - dailyCraftsSpent;
-        state.todayMap.set(
-          id,
-          (state.todayMap.get(id) ?? config.DAILY_FREE_CRAFTS) -
-            dailyCraftsSpent,
-        );
-        state.bankedMap.set(
-          id,
-          (state.bankedMap.get(id) ?? 0) - bankedCraftsSpent,
-        );
-        state.save();
+        const dailyCraftsSpent = usedTea
+          ? Math.min(
+              state.todayMap.get(id) ?? config.DAILY_FREE_CRAFTS,
+              successfulCrafts,
+            )
+          : 0;
+        const bankedCraftsSpent = usedTea
+          ? successfulCrafts - dailyCraftsSpent
+          : 0;
+        if (usedTea) {
+          state.todayMap.set(
+            id,
+            (state.todayMap.get(id) ?? config.DAILY_FREE_CRAFTS) -
+              dailyCraftsSpent,
+          );
+          state.bankedMap.set(
+            id,
+            (state.bankedMap.get(id) ?? 0) - bankedCraftsSpent,
+          );
+          state.save();
+        }
         const itemsToReturn = items
           .map(([item, count]) => [
             item,
@@ -276,6 +287,7 @@ const attemptCrafting: (
           remainingBanked: state.bankedMap.get(id) ?? 0,
           remainingDaily: state.todayMap.get(id) ?? config.DAILY_FREE_CRAFTS,
           dailyCraftsSpent: dailyCraftsSpent,
+          bankedCraftsSpent: bankedCraftsSpent,
         };
       }
     } else {
@@ -290,18 +302,20 @@ const attemptCrafting: (
         remainingBanked: state.bankedMap.get(id) ?? 0,
         remainingDaily: state.todayMap.get(id) ?? config.DAILY_FREE_CRAFTS,
         dailyCraftsSpent: 0,
+        bankedCraftsSpent: 0,
       };
     }
   }
-
+  console.log("Something went extremely wrong while tinkering");
   return {
     result:
-      "Tinker made no attempt to determine what you were trying to craft because this is a test",
+      "In theory it should not be possible to ever reach this message. If you are reading this, please contact Phillammon (#2393910) and tell him what you did.",
     craftsAttempted: 0,
     craftsSuccessful: 0,
     yieldedItems: items,
     remainingBanked: state.bankedMap.get(id) ?? 0,
     remainingDaily: state.todayMap.get(id) ?? 100,
     dailyCraftsSpent: 0,
+    bankedCraftsSpent: 0,
   };
 };

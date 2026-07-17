@@ -83,6 +83,47 @@ const UseChalk: Task = {
   },
 };
 
+const UpkeepEmpathy: Task = {
+  name: "Upkeep Empathy of the Newt",
+  done: async (client) => {
+    return (
+      (await client.effects.remainingEffectTurns(
+        relevantItemsAndEffects.EMPATHY,
+      )) > 0
+    );
+  },
+  execute: async (client) => {
+    await client.fetchText("runskillz.php", {
+      method: "GET",
+      query: {
+        action: "Skillz",
+        targetplayer: 0,
+        quantity: 10,
+        whichskill: 2009,
+      },
+    });
+    return true;
+  },
+};
+
+const UpkeepPolka: Task = {
+  name: "Upkeep Polka of Plenty",
+  done: async (client) => {
+    return (
+      (await client.effects.remainingEffectTurns(
+        relevantItemsAndEffects.POLKA,
+      )) > 0
+    );
+  },
+  execute: async (client) => {
+    await client.chat.macro(`/w Buffy 500 Polka of Plenty`);
+    await new Promise((resolve) => {
+      setTimeout(resolve, 1000 * config.LOOP_DELAY);
+    });
+    return true;
+  },
+};
+
 const OpenGiftPackages: Task = {
   name: "Open Gift Packages",
   done: async (client) => {
@@ -302,6 +343,8 @@ export const TinkerTasks = [
   EatEggs,
   DrinkIPA,
   AlertSeventeen,
+  UpkeepEmpathy,
+  UpkeepPolka,
   FarmChalk,
   Nightcap,
 ];

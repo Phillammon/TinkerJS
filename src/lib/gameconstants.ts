@@ -35,6 +35,14 @@ export class RelevantItemsAndEffects {
   public get CRAFTTEA(): Effect {
     return this.getIfLoaded<Effect>(this._CRAFTTEA);
   }
+  private _EMPATHY?: Effect;
+  public get EMPATHY(): Effect {
+    return this.getIfLoaded<Effect>(this._EMPATHY);
+  }
+  private _POLKA?: Effect;
+  public get POLKA(): Effect {
+    return this.getIfLoaded<Effect>(this._POLKA);
+  }
 
   constructor() {
     this.loaded = false;
@@ -68,6 +76,10 @@ export class RelevantItemsAndEffects {
       // (await gameData.findItemById(5434)) as Item, // DNOTC Box
     ];
     this._CRAFTTEA = (await gameData.findEffectByName("Craft Tea")) as Effect;
+    this._EMPATHY = (await gameData.findEffectByName("Empathy")) as Effect;
+    this._POLKA = (await gameData.findEffectByName(
+      "Polka of Plenty",
+    )) as Effect;
   }
 
   private getIfLoaded<T>(variable: T | undefined): T {
