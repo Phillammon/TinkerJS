@@ -116,9 +116,14 @@ const UpkeepPolka: Task = {
     );
   },
   execute: async (client) => {
-    await client.chat.macro(`/w Buffy 500 Polka of Plenty`);
-    await new Promise((resolve) => {
-      setTimeout(resolve, 1000 * config.LOOP_DELAY);
+    await client.fetchText("runskillz.php", {
+      method: "GET",
+      query: {
+        action: "Skillz",
+        targetplayer: 0,
+        quantity: 10,
+        whichskill: 6006,
+      },
     });
     return true;
   },
