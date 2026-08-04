@@ -30,15 +30,32 @@ const DetectRollover: Task = {
   },
 };
 
+const SpamOffChatEffects: Task = {
+  name: "Spamming Off Chat Effects",
+  done: async (client) =>
+    (
+      await Promise.all(
+        relevantItemsAndEffects.ANNOYING_EFFECTS.map(
+          async (annoying_effect) => {
+            return (
+              (await client.effects.remainingEffectTurns(annoying_effect)) ?? 0
+            );
+          },
+        ),
+      )
+    ).every((val) => val === 0),
+  execute: async (client, state) => {
+    await client.chat.macro(`/talkie Spamming off annoying chat effect`);
+    return true;
+  },
+};
+
 const ChatBeacon: Task = {
   name: "Announce In Chat",
   done: async (client, state) =>
     state.lastBeacon ===
     Math.floor(Date.now() / (1000 * config.TRADE_BEACON_DELAY)),
   execute: async (client, state) => {
-    for (let i = 0; i < 100; i++) {
-      await client.chat.macro(`/talkie Spam out chat effects`);
-    }
     await client.chat.macro(
       `/trade Let me craft for you! ${config.DAILY_FREE_CRAFTS} turn-taking crafts per day free per player, just send me your crafting components! (I am a bot, contact >>2393910 if I break)`,
     );
@@ -134,8 +151,8 @@ const OpenGiftPackages: Task = {
   done: async (client) => {
     return (
       await Promise.all(
-        relevantItemsAndEffects.PACKAGES.map(async (trinket) => {
-          return (await client.inventory.get()).get(trinket) ?? 0;
+        relevantItemsAndEffects.PACKAGES.map(async (package) => {
+          return (await client.inventory.get()).get(package) ?? 0;
         }),
       )
     ).every((val) => val === 0);
@@ -341,6 +358,7 @@ export const TinkerTasks = [
   UseChalk,
   OpenGiftPackages,
   Tinker,
+  SpamOffChatEffects,
   ChatBeacon,
   GetWorthless,
   GetClovers,

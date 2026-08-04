@@ -43,6 +43,10 @@ export class RelevantItemsAndEffects {
   public get POLKA(): Effect {
     return this.getIfLoaded<Effect>(this._POLKA);
   }
+  private _ANNOYING_EFFECTS?: Effect[];
+  public get ANNOYING_EFFECTS(): Effect[] {
+    return this.getIfLoaded<Effect[]>(this._ANNOYING_EFFECTS);
+  }
 
   constructor() {
     this.loaded = false;
@@ -80,6 +84,10 @@ export class RelevantItemsAndEffects {
     this._POLKA = (await gameData.findEffectByName(
       "Polka of Plenty",
     )) as Effect;
+    this._ANNOYING_EFFECTS = [
+      (await gameData.findEffectByName("Harpooned and Marooned")) as Effect,
+      (await gameData.findEffectByName("On Safari")) as Effect,
+    ];
   }
 
   private getIfLoaded<T>(variable: T | undefined): T {
