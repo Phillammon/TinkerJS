@@ -151,8 +151,8 @@ const OpenGiftPackages: Task = {
   done: async (client) => {
     return (
       await Promise.all(
-        relevantItemsAndEffects.PACKAGES.map(async (package) => {
-          return (await client.inventory.get()).get(package) ?? 0;
+        relevantItemsAndEffects.PACKAGES.map(async (giftpackage) => {
+          return (await client.inventory.get()).get(giftpackage) ?? 0;
         }),
       )
     ).every((val) => val === 0);
