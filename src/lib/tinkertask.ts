@@ -21,7 +21,12 @@ export const Tinker: Task = {
     console.log(
       `Message: ${mailToProcess.msg}${mailToProcess.insideNote ? `\n\n${mailToProcess.insideNote}` : ""}`,
     );
-    const { chalk, otherItems } = extractItemsFromKmail(mailToProcess);
+    const { chalk, otherItems, hasPackages } =
+      extractItemsFromKmail(mailToProcess);
+    if (hasPackages) {
+      console.log("Detected a gift package, rerunning package opening.");
+      return false;
+    }
     if (chalk) {
       console.log(`Detected ${chalk} chalk`);
     }
@@ -117,8 +122,12 @@ export const Tinker: Task = {
 const extractItemsFromKmail: (kmail: KmailMessage) => {
   chalk: number;
   otherItems: [Item, number][];
+  hasPackages: boolean;
 } = (kmail: KmailMessage) => {
   const chalkCount = kmail.items.get(relevantItemsAndEffects.CHALK);
+  const hasPackages = Array.from(kmail.items.entries() || []).some(([item]) =>
+    relevantItemsAndEffects.PACKAGES.includes(item),
+  );
   const items = Array.from(kmail.items.entries() || []).filter(
     ([item]) =>
       ![
@@ -126,7 +135,7 @@ const extractItemsFromKmail: (kmail: KmailMessage) => {
         ...relevantItemsAndEffects.PACKAGES,
       ].includes(item),
   );
-  return { chalk: chalkCount ?? 0, otherItems: items };
+  return { chalk: chalkCount ?? 0, otherItems: items, hasPackages };
 };
 
 const processChalk: (
