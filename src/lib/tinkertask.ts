@@ -23,8 +23,8 @@ export const Tinker: Task = {
     );
     const { chalk, otherItems, hasPackages } =
       extractItemsFromKmail(mailToProcess);
-    if (hasPackages) {
-      console.log("Detected a gift package, rerunning package opening.");
+    if (hasPackages && !otherItems.length) {
+      console.log("Detected empty gift package, rerunning package opening.");
       return false;
     }
     if (chalk) {
