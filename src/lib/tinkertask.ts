@@ -21,10 +21,10 @@ export const Tinker: Task = {
     console.log(
       `Message: ${mailToProcess.msg}${mailToProcess.insideNote ? `\n\n${mailToProcess.insideNote}` : ""}`,
     );
-    const { chalk, otherItems, hasPackages } =
+    const { chalk, otherItems, hasUnopenedPackage } =
       extractItemsFromKmail(mailToProcess);
-    if (hasPackages && !otherItems.length) {
-      console.log("Detected empty gift package, rerunning package opening.");
+    if (hasUnopenedPackage) {
+      console.log("Detected unopened gift package, rerunning package opening.");
       return false;
     }
     if (chalk) {
@@ -122,20 +122,28 @@ export const Tinker: Task = {
 const extractItemsFromKmail: (kmail: KmailMessage) => {
   chalk: number;
   otherItems: [Item, number][];
-  hasPackages: boolean;
+  hasUnopenedPackage: boolean;
 } = (kmail: KmailMessage) => {
   const chalkCount = kmail.items.get(relevantItemsAndEffects.CHALK);
-  const hasPackages = Array.from(kmail.items.entries() || []).some(([item]) =>
-    relevantItemsAndEffects.PACKAGES.includes(item),
-  );
-  const items = Array.from(kmail.items.entries() || []).filter(
+  const itemsInKmail = Array.from(kmail.items.entries() || []);
+  const craftComponents = itemsInKmail.filter(
     ([item]) =>
       ![
         relevantItemsAndEffects.CHALK,
         ...relevantItemsAndEffects.PACKAGES,
       ].includes(item),
   );
-  return { chalk: chalkCount ?? 0, otherItems: items, hasPackages };
+  const hasUnopenedPackage =
+    itemsInKmail.length === 1 &&
+    itemsInKmail.every(([item]) =>
+      relevantItemsAndEffects.PACKAGES.includes(item),
+    ) &&
+    kmail.meat === 0;
+  return {
+    chalk: chalkCount ?? 0,
+    otherItems: craftComponents,
+    hasUnopenedPackage,
+  };
 };
 
 const processChalk: (
