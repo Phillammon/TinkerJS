@@ -4,6 +4,23 @@ import { Tinker } from "./tinkertask.js";
 import { relevantItemsAndEffects } from "./gameconstants.js";
 import { Item } from "data-of-loathing";
 
+const HealUp: Task = {
+  name: "Healing Up",
+  done: async (client) =>
+    client.hp > 99 &&
+    ((await client.effects.remainingEffectTurns(
+      relevantItemsAndEffects.BEATEN_UP,
+    )) ?? 0) === 0,
+  execute: async (client) => {
+    await client.fetchText("campground.php", {
+      query: {
+        method: "GET",
+        action: "rest",
+      },
+    });
+    return true;
+  },
+};
 const DetectRollover: Task = {
   name: "Detect Rollover",
   done: async (client) => {
@@ -355,6 +372,7 @@ const Nightcap: Task = {
 
 export const TinkerTasks = [
   DetectRollover,
+  HealUp,
   UseChalk,
   OpenGiftPackages,
   Tinker,

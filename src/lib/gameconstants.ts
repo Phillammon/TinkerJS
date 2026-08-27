@@ -47,6 +47,10 @@ export class RelevantItemsAndEffects {
   public get ANNOYING_EFFECTS(): Effect[] {
     return this.getIfLoaded<Effect[]>(this._ANNOYING_EFFECTS);
   }
+  private _BEATEN_UP?: Effect;
+  public get BEATEN_UP(): Effect {
+    return this.getIfLoaded<Effect>(this._BEATEN_UP);
+  }
 
   constructor() {
     this.loaded = false;
@@ -88,6 +92,7 @@ export class RelevantItemsAndEffects {
       (await gameData.findEffectByName("Harpooned and Marooned")) as Effect,
       (await gameData.findEffectByName("On Safari")) as Effect,
     ];
+    this._BEATEN_UP = (await gameData.findEffectByName("Beaten Up")) as Effect;
   }
 
   private getIfLoaded<T>(variable: T | undefined): T {
