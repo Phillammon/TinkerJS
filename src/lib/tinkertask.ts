@@ -36,6 +36,15 @@ export const Tinker: Task = {
         console.log(`- ${item[1]}x ${item[0].name}`);
       }
     }
+
+    if (
+      otherItems.some(([item]) => item === relevantItemsAndEffects.HOLIDAY_FUN)
+    ) {
+      console.log(`Blocking Holiday Fun Sender ${player.name}`);
+      await client.chat.macro(`/baleet ${player.name}`);
+      await client.kmail.delete([mailToProcess.id]);
+      return true;
+    }
     const chalkResult = await processChalk(player.id, chalk, client, state);
 
     const craftResult = await attemptCrafting(

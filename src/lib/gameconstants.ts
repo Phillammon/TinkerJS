@@ -52,6 +52,11 @@ export class RelevantItemsAndEffects {
     return this.getIfLoaded<Effect>(this._BEATEN_UP);
   }
 
+  private _HOLIDAY_FUN?: Item;
+  public get HOLIDAY_FUN(): Item {
+    return this.getIfLoaded<Item>(this._HOLIDAY_FUN);
+  }
+
   constructor() {
     this.loaded = false;
   }
@@ -93,6 +98,7 @@ export class RelevantItemsAndEffects {
       (await gameData.findEffectByName("On Safari")) as Effect,
     ];
     this._BEATEN_UP = (await gameData.findEffectByName("Beaten Up")) as Effect;
+    this._HOLIDAY_FUN = (await gameData.findItemById(4811)) as Item;
   }
 
   private getIfLoaded<T>(variable: T | undefined): T {
