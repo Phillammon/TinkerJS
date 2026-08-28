@@ -38,9 +38,11 @@ export const Tinker: Task = {
     }
 
     if (
-      otherItems.some(([item]) => item === relevantItemsAndEffects.HOLIDAY_FUN)
+      otherItems.some(([item]) =>
+        relevantItemsAndEffects.PRANK_ITEMS.includes(item),
+      )
     ) {
-      console.log(`Blocking Holiday Fun Sender ${player.name}`);
+      console.log(`Blocking Prank Item Sender ${player.name}`);
       await client.chat.macro(`/baleet ${player.name}`);
       await client.kmail.delete([mailToProcess.id]);
       return true;
