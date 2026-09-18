@@ -8,6 +8,7 @@ import { TinkerState } from "./state.js";
 import { config } from "./config.js";
 
 const methods = ["cook", "smith", "cocktail"];
+const pasteMethods = ["combine", "cook", "smith", "cocktail"];
 
 export const Tinker: Task = {
   name: "Tinker",
@@ -21,7 +22,7 @@ export const Tinker: Task = {
     console.log(
       `Message: ${mailToProcess.msg}${mailToProcess.insideNote ? `\n\n${mailToProcess.insideNote}` : ""}`,
     );
-    const { chalk, otherItems, hasUnopenedPackage } =
+    const { chalk, paste, otherItems, hasUnopenedPackage } =
       extractItemsFromKmail(mailToProcess);
     if (hasUnopenedPackage) {
       console.log("Detected unopened gift package, rerunning package opening.");
@@ -52,6 +53,7 @@ export const Tinker: Task = {
     const craftResult = await attemptCrafting(
       player.id,
       otherItems,
+      paste,
       client,
       state,
     );
@@ -132,15 +134,18 @@ export const Tinker: Task = {
 
 const extractItemsFromKmail: (kmail: KmailMessage) => {
   chalk: number;
+  paste: number;
   otherItems: [Item, number][];
   hasUnopenedPackage: boolean;
 } = (kmail: KmailMessage) => {
   const chalkCount = kmail.items.get(relevantItemsAndEffects.CHALK);
+  const pasteCount = kmail.items.get(relevantItemsAndEffects.MEATPASTE);
   const itemsInKmail = Array.from(kmail.items.entries() || []);
   const craftComponents = itemsInKmail.filter(
     ([item]) =>
       ![
         relevantItemsAndEffects.CHALK,
+        relevantItemsAndEffects.MEATPASTE,
         ...relevantItemsAndEffects.PACKAGES,
       ].includes(item),
   );
@@ -152,6 +157,7 @@ const extractItemsFromKmail: (kmail: KmailMessage) => {
     kmail.meat === 0;
   return {
     chalk: chalkCount ?? 0,
+    paste: pasteCount ?? 0,
     otherItems: craftComponents,
     hasUnopenedPackage,
   };
@@ -181,6 +187,7 @@ const processChalk: (
 const attemptCrafting: (
   id: number,
   items: [Item, number][],
+  paste: number,
   client: Client,
   state: TinkerState,
 ) => Promise<{
@@ -192,7 +199,7 @@ const attemptCrafting: (
   remainingBanked: number;
   dailyCraftsSpent: number;
   bankedCraftsSpent: number;
-}> = async (id, items, client, state) => {
+}> = async (id, items, paste, client, state) => {
   if (items.length > 2 || items.length === 0) {
     return {
       result:
@@ -229,15 +236,22 @@ const attemptCrafting: (
         bankedCraftsSpent: 0,
       };
     }
-    const craftsToAttempt = Math.min(
-      componentQuantity,
-      availableCrafts,
-      config.MAX_CRAFTS_PER_KMAIL,
-    );
+    const craftsToAttempt = paste
+      ? Math.min(
+          componentQuantity,
+          paste,
+          availableCrafts,
+          config.MAX_CRAFTS_PER_KMAIL,
+        )
+      : Math.min(
+          componentQuantity,
+          availableCrafts,
+          config.MAX_CRAFTS_PER_KMAIL,
+        );
     let creationResult = null;
     let usedTea = false;
 
-    for (let method of methods) {
+    for (let method of paste ? pasteMethods : methods) {
       const result = await client.fetchText("craft.php", {
         method: "POST",
         query: {
@@ -322,8 +336,8 @@ const attemptCrafting: (
       return {
         result:
           items.length === 1
-            ? `I tried crafting your ${components[0]?.name} with itself, but it didn't craft into anything.`
-            : `I tried crafting your ${components[0]?.name} and ${components[1]?.name} together, but they didn't craft into anything.`,
+            ? `I tried crafting your ${components[0]?.name} with itself, but it didn't craft into anything. If you were trying to get me to craft a pasting recipe, please send the requisite meat paste as well.`
+            : `I tried crafting your ${components[0]?.name} and ${components[1]?.name} together, but they didn't craft into anything. If you were trying to get me to craft a pasting recipe, please send the requisite meat paste as well.`,
         craftsAttempted: 0,
         craftsSuccessful: 0,
         yieldedItems: items,

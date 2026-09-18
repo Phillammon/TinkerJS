@@ -7,6 +7,10 @@ export class RelevantItemsAndEffects {
   public get CHALK(): Item {
     return this.getIfLoaded<Item>(this._CHALK);
   }
+  private _MEATPASTE?: Item | undefined;
+  public get MEATPASTE(): Item {
+    return this.getIfLoaded<Item>(this._MEATPASTE);
+  }
   private _GUMSTRING?: Item;
   public get GUMSTRING(): Item {
     return this.getIfLoaded<Item>(this._GUMSTRING);
@@ -64,6 +68,7 @@ export class RelevantItemsAndEffects {
   public async load(): Promise<void> {
     this.loaded = true;
     this._CHALK = (await gameData.findItemById(1794)) as Item;
+    this._MEATPASTE = (await gameData.findItemById(25)) as Item;
     this._GUMSTRING = (await gameData.findItemById(23)) as Item;
     this._TRINKETS = [
       (await gameData.findItemById(43)) as Item,
